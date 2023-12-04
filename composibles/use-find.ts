@@ -1,9 +1,8 @@
 import { ref, Ref } from 'vue';
-import { api } from 'boot/axios';
 import { ModelOptions } from 'components/qnatk/QnatkListDTO';
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
-export function useFind<T>(baseUrl = 'qnatk') {
+export function useFind<T>(api: AxiosInstance, baseUrl = 'qnatk') {
   // Use `T | null` to indicate that data may hold a single object or null.
   const data: Ref<T | T[] | null> = ref(null);
   const loading = ref(false);
@@ -23,8 +22,7 @@ export function useFind<T>(baseUrl = 'qnatk') {
       data.value = response.data as T[];
     } catch (e: unknown) {
       if (axios.isAxiosError(e)) {
-        error.value =
-          e.response?.data?.message || e.message || 'An error occurred';
+        error.value = e.response?.data?.message || e.message || 'An error occurred';
       } else {
         error.value = e as string;
       }
@@ -49,8 +47,7 @@ export function useFind<T>(baseUrl = 'qnatk') {
       data.value = result.length > 0 ? result[0] : null;
     } catch (e: unknown) {
       if (axios.isAxiosError(e)) {
-        error.value =
-          e.response?.data?.message || e.message || 'An error occurred';
+        error.value = e.response?.data?.message || e.message || 'An error occurred';
       } else {
         error.value = e as string;
       }

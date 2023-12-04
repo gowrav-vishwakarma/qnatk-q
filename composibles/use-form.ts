@@ -1,7 +1,6 @@
 import { ref } from 'vue';
-import { api } from 'boot/axios';
 import { useQuasar } from 'quasar';
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 type FormErrors = Record<string, string[]>;
 type ErrorResponse = {
@@ -9,6 +8,7 @@ type ErrorResponse = {
 };
 
 export function useForm(
+  api: AxiosInstance, // Add the AxiosInstance parameter
   initialUrl: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   defaultValues: Record<string, any>,
@@ -101,10 +101,7 @@ export function useForm(
         } else {
           $q.notify({
             color: 'negative',
-            message:
-              error.response.data.statusCode +
-              ' ' +
-              error.response.data.message,
+            message: error.response.data.statusCode + ' ' + error.response.data.message,
           });
         }
       } else {

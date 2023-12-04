@@ -1,7 +1,7 @@
 import { ref, watch } from 'vue';
-import { api } from 'boot/axios';
 import { ModelOptions, PaginationOption, TransformedSortOption } from 'components/qnatk/QnatkListDTO';
 import { useQuasar } from 'quasar';
+import { AxiosInstance } from 'axios';
 
 interface RequestProps {
   pagination: {
@@ -17,7 +17,7 @@ interface RequestProps {
   getCellValue: (col: any, row: any) => any;
 }
 
-export function useDatatable<T>(baseModel: string, baseUrl = 'qnatk', transformSortBy: (sortBy: string) => string | TransformedSortOption = (sortBy) => sortBy) {
+export function useDatatable<T>(api: AxiosInstance, baseModel: string, baseUrl = 'qnatk', transformSortBy: (sortBy: string) => string | TransformedSortOption = (sortBy) => sortBy) {
   // Default to no transformation)
   const data = ref<T[]>([]);
   const actions = ref([]);
