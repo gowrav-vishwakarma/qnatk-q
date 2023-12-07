@@ -1,7 +1,7 @@
 // useUniqueCheck.ts
 import { ref } from 'vue';
 import { api } from 'boot/axios';
-import { ModelOptions } from 'components/qnatk/QnatkListDTO';
+import { ModelOptions } from '../QnatkListDTO';
 
 export function useUniqueCheck(
   baseModel: string,

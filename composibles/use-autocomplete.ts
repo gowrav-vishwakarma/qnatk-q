@@ -5,7 +5,7 @@ import {
   AutocompleteFunction,
   ModelOptions,
   SelectOption,
-} from 'components/qnatk/QnatkListDTO';
+} from '../QnatkListDTO';
 
 export function useAutocomplete(
   baseModel: string,

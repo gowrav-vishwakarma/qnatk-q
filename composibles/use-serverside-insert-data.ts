@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { api } from 'boot/axios';
-import { QNATKFormField } from 'components/qnatk/form-field-types';
+import { QNATKFormField } from '../form-field-types';
 
 export function useInsertData<T>(
   baseModel: string,
