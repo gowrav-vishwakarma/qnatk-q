@@ -1,61 +1,131 @@
 <template>
   <q-btn-group>
     <template v-for="action in singleRecordActions" :key="action.name">
-      <q-btn v-if="actionUnavailableBehavior === 'hide' ? checkCondition(action, props.record) : true" :disabled="actionUnavailableBehavior === 'disable' && !checkCondition(action, props.record)" dense flat :icon="action.icon" :color="actionUnavailableBehavior === 'disable' && !checkCondition(action, props.record) ? 'grey' : action.iconColor ?? 'primary'" size="sm" @click="() => toggleDialog(action.name)">
-        <q-dialog v-model="dialogStates[action.name]" full-width>
-          <template v-if="isLoading">
-            <q-spinner />
-          </template>
-          <template v-else>
-            <slot :name="action.name" :action="action" :record="props.record" :closeDialog="() => toggleDialog(action.name, false)" :confirmAction="() => handleConfirmation(action)">
-              <!-- Check if the action UI is of type confirmation -->
-              <template v-if="action.ui && action.ui.mode === 'confirmation'">
-                <q-card>
-                  <q-card-section>
-                    <div class="text-h6">{{ action.ui.title }}</div>
-                    <div>{{ action.ui.message }}</div>
-                  </q-card-section>
-                  <q-card-actions align="right">
-                    <q-btn flat label="Cancel" color="primary" @click="toggleDialog(action.name, false)" />
-                    <q-btn flat label="Confirm" color="primary" @click="() => handleConfirmation(action)" />
-                  </q-card-actions>
-                </q-card>
-              </template>
-              <template v-else>
-                <q-card>
-                  <q-card-section>
-                    <div class="text-h6">{{ action.ui.title }}</div>
-                    <div>{{ action.ui.message }}</div>
-                  </q-card-section>
-                  <q-card-section>
-                    <q-banner icon="warning" class="bg-red-5" dark>
-                      <div class="text-h6">NOT IMPLEMENTED</div>
-                      <div>
-                        This action is not implemented yet. Please create a template in parent component with
-                        <b>'#{{ action.name }}'</b>
-                        slot.
-                      </div>
-                    </q-banner>
-                    <code> &lt;template #{{ action.name }}="{ action, closeDialog }"&gt; &lt;your-component :action="action" :record="props.row" :close-dialog="closeDialog" @action-completed="fetchData" &gt;&lt;/your-component$lt; &lt;/template&gt; </code>
-                  </q-card-section>
-                  <q-card-actions align="right">
-                    <q-btn flat label="Cancel" color="primary" @click="toggleDialog(action.name, false)" />
-                    <q-btn flat label="NOT IMPLEMENTED" color="red" @click="toggleDialog(action.name, false)" />
-                  </q-card-actions>
-                </q-card>
-              </template>
-            </slot>
-          </template>
-          <template v-slot:confirm-action="{ action }">
-            <!-- Scoped slot for overriding confirm action -->
-            <slot :name="'confirm-' + action.name" :action="action" :closeDialog="() => toggleDialog(action.name, false)" />
-          </template>
-          <template v-for="(errorMessages, field) in errors" :key="field">
-            <div v-for="message in errorMessages" :key="message" class="text-negative">
-              {{ message }}
-            </div>
-          </template>
-        </q-dialog>
+      <q-btn
+        v-if="
+          actionUnavailableBehavior === 'hide'
+            ? checkCondition(action, props.record)
+            : true
+        "
+        :disabled="
+          actionUnavailableBehavior === 'disable' &&
+          !checkCondition(action, props.record)
+        "
+        dense
+        flat
+        :icon="action.icon"
+        :color="
+          actionUnavailableBehavior === 'disable' &&
+          !checkCondition(action, props.record)
+            ? 'grey'
+            : action.iconColor ?? 'primary'
+        "
+        size="sm"
+        @click="() => toggleDialog(action.name)"
+      >
+        <slot
+          :name="`${action.name}-outer`"
+          :action="action"
+          :record="props.record"
+          :closeDialog="() => toggleDialog(action.name, false)"
+          :confirmAction="() => handleConfirmation(action)"
+        >
+          <q-dialog v-model="dialogStates[action.name]" full-width>
+            <template v-if="isLoading">
+              <q-spinner />
+            </template>
+            <template v-else>
+              <slot
+                :name="action.name"
+                :action="action"
+                :record="props.record"
+                :closeDialog="() => toggleDialog(action.name, false)"
+                :confirmAction="() => handleConfirmation(action)"
+              >
+                <!-- Check if the action UI is of type confirmation -->
+                <template v-if="action.ui && action.ui.mode === 'confirmation'">
+                  <q-card>
+                    <q-card-section>
+                      <div class="text-h6">{{ action.ui.title }}</div>
+                      <div>{{ action.ui.message }}</div>
+                    </q-card-section>
+                    <q-card-actions align="right">
+                      <q-btn
+                        flat
+                        label="Cancel"
+                        color="primary"
+                        @click="toggleDialog(action.name, false)"
+                      />
+                      <q-btn
+                        flat
+                        label="Confirm"
+                        color="primary"
+                        @click="() => handleConfirmation(action)"
+                      />
+                    </q-card-actions>
+                  </q-card>
+                </template>
+                <template v-else>
+                  <q-card>
+                    <q-card-section>
+                      <div class="text-h6">{{ action.ui.title }}</div>
+                      <div>{{ action.ui.message }}</div>
+                    </q-card-section>
+                    <q-card-section>
+                      <q-banner icon="warning" class="bg-red-5" dark>
+                        <div class="text-h6">NOT IMPLEMENTED</div>
+                        <div>
+                          This action is not implemented yet. Please create a
+                          template in parent component with
+                          <b>'#{{ action.name }}'</b>
+                          slot.
+                        </div>
+                      </q-banner>
+                      <code>
+                        &lt;template #{{ action.name }}="{ action, closeDialog
+                        }"&gt; &lt;your-component :action="action"
+                        :record="props.row" :close-dialog="closeDialog"
+                        @action-completed="fetchData"
+                        &gt;&lt;/your-component$lt; &lt;/template&gt;
+                      </code>
+                    </q-card-section>
+                    <q-card-actions align="right">
+                      <q-btn
+                        flat
+                        label="Cancel"
+                        color="primary"
+                        @click="toggleDialog(action.name, false)"
+                      />
+                      <q-btn
+                        flat
+                        label="NOT IMPLEMENTED"
+                        color="red"
+                        @click="toggleDialog(action.name, false)"
+                      />
+                    </q-card-actions>
+                  </q-card>
+                </template>
+              </slot>
+            </template>
+            <template v-slot:confirm-action="{ action }">
+              <!-- Scoped slot for overriding confirm action -->
+              <slot
+                :name="'confirm-' + action.name"
+                :action="action"
+                :closeDialog="() => toggleDialog(action.name, false)"
+              />
+            </template>
+            <template v-for="(errorMessages, field) in errors" :key="field">
+              <div
+                v-for="message in errorMessages"
+                :key="message"
+                class="text-negative"
+              >
+                {{ message }}
+              </div>
+            </template>
+          </q-dialog>
+        </slot>
       </q-btn>
     </template>
   </q-btn-group>
@@ -157,7 +227,9 @@ const handleConfirmation = async (action) => {
 
   if (customConfirmations.value[action.name]) {
     // Custom confirmation logic
-    customConfirmations.value[action.name](action, props.record, () => toggleDialog(action.name, false));
+    customConfirmations.value[action.name](action, props.record, () =>
+      toggleDialog(action.name, false)
+    );
   } else {
     // Default confirmation logic
     console.log('Confirmed action:', action.name);
