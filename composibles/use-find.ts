@@ -1,5 +1,5 @@
 import { ref, Ref } from 'vue';
-import { ModelOptions } from 'components/qnatk/QnatkListDTO';
+import { ModelOptions } from '../QnatkListDTO';
 import axios, { AxiosInstance } from 'axios';
 
 export function useFind<T>(api: AxiosInstance, baseUrl = 'qnatk') {

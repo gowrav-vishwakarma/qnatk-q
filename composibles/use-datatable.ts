@@ -1,5 +1,5 @@
 import { ref, watch } from 'vue';
-import { ModelOptions, PaginationOption, TransformedSortOption } from 'components/qnatk/QnatkListDTO';
+import { ModelOptions, PaginationOption, TransformedSortOption } from '../QnatkListDTO';
 import { useQuasar } from 'quasar';
 import { AxiosInstance } from 'axios';
 
