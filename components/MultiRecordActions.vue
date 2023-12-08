@@ -125,6 +125,7 @@
 <script setup lang="ts">
 import { computed, reactive, toRefs } from 'vue';
 import { useForm } from 'components/qnatk/composibles/use-form';
+import { ActionListDTO } from 'components/qnatk/ActionDTO';
 
 interface DialogStates {
   [key: string]: boolean;
@@ -140,7 +141,7 @@ const props = defineProps({
     required: true,
   },
   actions: {
-    type: Array,
+    type: Object as () => ActionListDTO,
     required: true,
   },
   records: {
@@ -179,7 +180,9 @@ const checkCondition = (action: ActionStructure, selectedRecords: any[]) => {
 };
 
 const multiRecordActions = computed(() => {
-  return props.actions.filter((action) => action.mode === 'MultiRecord');
+  return Object.keys(props.actions)
+    .filter((key) => props.actions[key].mode === 'MultiRecord')
+    .map((key) => props.actions[key]);
 });
 
 // State to track dialog open/close for each action

@@ -110,6 +110,7 @@
 <script setup lang="ts">
 import { computed, reactive, toRefs } from 'vue';
 import { useForm } from 'components/qnatk/composibles/use-form';
+import { ActionListDTO } from 'components/qnatk/ActionDTO';
 
 interface DialogStates {
   [key: string]: boolean;
@@ -125,7 +126,7 @@ const props = defineProps({
     required: true,
   },
   actions: {
-    type: Array,
+    type: Object as () => ActionListDTO,
     required: true,
   },
   customConfirmations: {
@@ -139,7 +140,9 @@ const emit = defineEmits(['action-completed']);
 const { customConfirmations } = toRefs(props);
 
 const noRecordActions = computed(() => {
-  return props.actions.filter((action) => action.mode === 'NoRecord');
+  return Object.keys(props.actions)
+    .filter((key) => props.actions[key].mode === 'NoRecord')
+    .map((key) => props.actions[key]);
 });
 
 // State to track dialog open/close for each action
