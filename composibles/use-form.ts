@@ -14,7 +14,9 @@ export function useForm(
   defaultValues: Record<string, any>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSuccess?: (data: any) => void,
-  onError?: (error: unknown) => void
+  onError?: (error: unknown) => void,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  beforeSubmit?: (values: Record<string, any>) => void
 ) {
   const $q = useQuasar();
   const values = ref({ ...defaultValues });
@@ -48,6 +50,10 @@ export function useForm(
   const validateAndSubmit = async () => {
     errors.value = {};
     isLoading.value = true;
+
+    if (beforeSubmit) {
+      beforeSubmit(values.value);
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let payload: FormData | Record<string, any>;
@@ -101,7 +107,10 @@ export function useForm(
         } else {
           $q.notify({
             color: 'negative',
-            message: error.response.data.statusCode + ' ' + error.response.data.message,
+            message:
+              error.response.data.statusCode +
+              ' ' +
+              error.response.data.message,
           });
         }
       } else {
