@@ -35,24 +35,48 @@ const props = defineProps({
   ...autoCompletePropTypes,
 });
 
-// Define default functions
-const defaultGetModelOptionsFn = (val: string): ModelOptions => ({
-  attributes: props.attributes || [props.valueFieldName, props.labelFieldName],
-  include: props.include || [],
-  where: props.where
-    ? props.where(val)
-    : { [props.labelFieldName]: { $like: `%${val}%` } },
-  limit: props.limit || 10,
-});
+const defaultGetModelOptionsFn = (val: string): ModelOptions => {
+  const modelOptions: ModelOptions = {
+    attributes: props.attributes || [
+      props.valueFieldName,
+      props.labelFieldName,
+    ],
+    include:
+      typeof props.include === 'function'
+        ? props.include(val)
+        : props.include || [],
+    limit: props.limit || 10,
+  };
 
-const defaultGetFetchInitialValueOptionsFn = (id: string): ModelOptions => ({
-  attributes: props.attributes || [props.valueFieldName, props.labelFieldName],
-  include: props.include || [],
-  where: props.whereOnInitialFetch
-    ? props.whereOnInitialFetch(id)
-    : { [props.valueFieldName]: { $eq: id } },
-});
+  if (props.where !== false) {
+    modelOptions.where = props.where
+      ? props.where(val)
+      : { [props.labelFieldName]: { $like: `%${val}%` } };
+  }
 
+  return modelOptions;
+};
+
+const defaultGetFetchInitialValueOptionsFn = (id: string): ModelOptions => {
+  const modelOptions: ModelOptions = {
+    attributes: props.attributes || [
+      props.valueFieldName,
+      props.labelFieldName,
+    ],
+    include:
+      typeof props.include === 'function'
+        ? props.include(id)
+        : props.include || [],
+  };
+
+  if (props.whereOnInitialFetch !== false) {
+    modelOptions.where = props.whereOnInitialFetch
+      ? props.whereOnInitialFetch(id)
+      : { [props.valueFieldName]: { $eq: id } };
+  }
+
+  return modelOptions;
+};
 const emits = defineEmits(['update:modelValue']);
 if (!props.baseModel) throw new Error('baseModel is required');
 
