@@ -74,7 +74,16 @@ export function useForm(
             }
           });
         } else {
-          payload.append(key, value);
+          // Check if the value is an object and not a File, and stringify it
+          if (
+            typeof value === 'object' &&
+            value !== null &&
+            !(value instanceof File)
+          ) {
+            payload.append(key, JSON.stringify(value));
+          } else {
+            payload.append(key, value);
+          }
         }
       });
     } else {
