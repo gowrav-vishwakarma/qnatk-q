@@ -68,7 +68,7 @@ const { suggestions, isLoading, filterFn, selected, fetchInitialValue } =
 // Function to emit the selected value
 const updateSelected = (newValue: { label: string; value: number } | null) => {
   selected.value = newValue;
-  emits('update:modelValue', newValue?.value);
+  emits('update:modelValue', newValue);
 };
 
 // Initial fetch and watch for external changes
