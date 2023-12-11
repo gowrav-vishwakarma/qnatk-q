@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { reactive, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
@@ -11,12 +11,7 @@ export function useForm(
   api: AxiosInstance, // Add the AxiosInstance parameter
   initialUrl: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  defaultValues: Record<string, any>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSuccess?: (data: any) => void,
-  onError?: (error: unknown) => void,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  beforeSubmit?: (values: Record<string, any>) => void
+  defaultValues: Record<string, any>
 ) {
   const $q = useQuasar();
   const values = ref({ ...defaultValues });
@@ -24,6 +19,16 @@ export function useForm(
   const isLoading = ref(false);
 
   const url = ref(initialUrl);
+
+  // Define the callback functions in a reactive object
+  const callbacks = reactive({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSuccess: (_data: any) => {},
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (_error: any) => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    beforeSubmit: (_values: Record<string, unknown>) => {},
+  });
 
   // Function to update the URL
   const updateUrl = (newUrl: string) => {
@@ -51,9 +56,7 @@ export function useForm(
     errors.value = {};
     isLoading.value = true;
 
-    if (beforeSubmit) {
-      beforeSubmit(values.value);
-    }
+    callbacks.beforeSubmit(values.value);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let payload: FormData | Record<string, any>;
@@ -88,9 +91,9 @@ export function useForm(
       const response = await api.post(url.value, payload, config);
       $q.notify({ color: 'positive', message: 'Form submitted successfully!' });
       values.value = { ...defaultValues };
-      onSuccess?.(response.data);
+      callbacks.onSuccess(response.data);
     } catch (error) {
-      onError?.(error);
+      callbacks.onError(error);
       console.error(error);
       if (axios.isAxiosError(error) && error.response) {
         const errorResponse = error.response.data as ErrorResponse;
@@ -130,5 +133,6 @@ export function useForm(
     isLoading,
     updateUrl,
     validateAndSubmit,
+    callbacks,
   };
 }
