@@ -78,13 +78,11 @@ export const autoCompletePropTypes = {
     type: [Array, Function] as PropType<
       ModelInclude[] | ((val: string) => ModelInclude[])
     >,
-    default: () => [],
   },
   where: {
-    type: [Function, Boolean] as PropType<
-      ((val: string) => ModelWhere) | false
+    type: [Function, Boolean, undefined] as PropType<
+      ((val: string) => ModelWhere) | false | undefined
     >,
-    default: false,
   },
   whereOnInitialFetch: Function as PropType<(val: string) => ModelWhere>,
   limit: Number,

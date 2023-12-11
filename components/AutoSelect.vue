@@ -47,13 +47,11 @@ const defaultGetModelOptionsFn = (val: string): ModelOptions => {
         : props.include || [],
     limit: props.limit || 10,
   };
+  modelOptions.where = props.where
+    ? props.where(val)
+    : { [props.labelFieldName]: { $like: `%${val}%` } };
 
-  if (props.where !== false) {
-    modelOptions.where = props.where
-      ? props.where(val)
-      : { [props.labelFieldName]: { $like: `%${val}%` } };
-  }
-
+  console.log('modelOptions', modelOptions, 'props', props);
   return modelOptions;
 };
 
