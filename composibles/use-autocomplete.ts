@@ -17,7 +17,12 @@ export function useAutocomplete(
   const searchTerm: Ref<string> = ref('');
   const suggestions: Ref<Array<{ label: string; value: number }>> = ref([]);
   const isLoading: Ref<boolean> = ref(false);
-  const selected: Ref<{ label: string; value: number } | null> = ref(null);
+  const selected: Ref<{
+    label: string;
+    value: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  } | null> = ref(null);
 
   async function performSearch(val: string, endpoint: string): Promise<void> {
     if (val.length < 2) {
