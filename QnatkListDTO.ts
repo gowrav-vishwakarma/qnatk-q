@@ -65,7 +65,7 @@ export type TransformedSortOption = [
 ];
 
 export const autoCompletePropTypes = {
-  modelValue: Number,
+  modelValue: [Number, Object],
   label: {
     type: String,
   },
@@ -79,7 +79,9 @@ export const autoCompletePropTypes = {
   whereOnInitialFetch: Function as PropType<(val: string) => ModelWhere>,
   limit: Number,
   getModelOptionsFn: Function as PropType<(val: string) => ModelOptions>,
-  getFetchInitialValueOptionsFn: Function as PropType<(id: string) => ModelOptions>,
+  getFetchInitialValueOptionsFn: Function as PropType<
+    (id: string) => ModelOptions
+  >,
   valueFieldName: {
     type: String,
     default: 'id',

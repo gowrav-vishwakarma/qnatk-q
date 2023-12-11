@@ -54,6 +54,7 @@ const defaultGetFetchInitialValueOptionsFn = (id: string): ModelOptions => ({
 });
 
 const emits = defineEmits(['update:modelValue']);
+if (!props.baseModel) throw new Error('baseModel is required');
 
 // Set up autocomplete using props
 const { suggestions, isLoading, filterFn, selected, fetchInitialValue } =
