@@ -47,9 +47,10 @@ const defaultGetModelOptionsFn = (val: string): ModelOptions => {
         : props.include || [],
     limit: props.limit || 10,
   };
-  if (props.where === undefined) {
-    modelOptions.where = { [props.labelFieldName]: { $like: `%${val}%` } };
-  } else if (props.where !== false) {
+  // if (props.where === undefined) {
+  //   modelOptions.where = { [props.labelFieldName]: { $like: `%${val}%` } };
+  // } else
+  if (props.where !== false && typeof props.where === 'function') {
     modelOptions.where = props.where(val);
   }
 
@@ -69,11 +70,11 @@ const defaultGetFetchInitialValueOptionsFn = (id: string): ModelOptions => {
         : props.include || [],
   };
 
-  if (props.whereOnInitialFetch !== false) {
-    modelOptions.where = props.whereOnInitialFetch
-      ? props.whereOnInitialFetch(id)
-      : { [props.valueFieldName]: { $eq: id } };
-  }
+  // if (props.whereOnInitialFetch !== false) {
+  //   modelOptions.where = props.whereOnInitialFetch
+  //     ? props.whereOnInitialFetch(id)
+  //     : { [props.valueFieldName]: { $eq: id } };
+  // }
 
   return modelOptions;
 };
