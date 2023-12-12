@@ -85,7 +85,12 @@ export const autoCompletePropTypes = {
     >,
     default: undefined, // Setting default as undefined
   },
-  whereOnInitialFetch: Function as PropType<(val: string) => ModelWhere>,
+  whereOnInitialFetch: {
+    type: [Function, undefined, Boolean] as PropType<
+      ((val: string) => ModelWhere) | false | undefined
+    >,
+    default: undefined, // Setting default as undefined
+  },
   limit: Number,
   getModelOptionsFn: Function as PropType<(val: string) => ModelOptions>,
   getFetchInitialValueOptionsFn: Function as PropType<
