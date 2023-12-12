@@ -52,7 +52,7 @@ export function useFind(api: AxiosInstance, baseUrl: string) {
         limit: 1,
         offset: findOptions.offset ?? 0,
       });
-      data.value = response.data as T;
+      data.value = response.data[0] as T;
     } catch (e: unknown) {
       if (axios.isAxiosError(e)) {
         error.value =
