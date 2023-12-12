@@ -70,11 +70,11 @@ const defaultGetFetchInitialValueOptionsFn = (id: string): ModelOptions => {
         : props.include || [],
   };
 
-  // if (props.whereOnInitialFetch !== false) {
-  //   modelOptions.where = props.whereOnInitialFetch
-  //     ? props.whereOnInitialFetch(id)
-  //     : { [props.valueFieldName]: { $eq: id } };
-  // }
+  if (props.whereOnInitialFetch !== false) {
+    modelOptions.where = props.whereOnInitialFetch
+      ? props.whereOnInitialFetch(id)
+      : { [props.valueFieldName]: { $eq: id } };
+  }
 
   return modelOptions;
 };
@@ -101,6 +101,7 @@ const updateSelected = (newValue: { label: string; value: number } | null) => {
 watch(
   () => props.modelValue,
   async (newVal) => {
+    console.log('newVal', newVal);
     if (typeof newVal === 'number' && newVal !== selected.value?.value) {
       await fetchInitialValue(newVal);
     }
