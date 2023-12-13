@@ -109,8 +109,8 @@
 
 <script setup lang="ts">
 import { computed, reactive, toRefs } from 'vue';
-import { useForm } from 'components/qnatk/composibles/use-form';
-import { ActionListDTO } from 'components/qnatk/ActionDTO';
+import { useForm } from '../composibles/use-form';
+import { ActionListDTO } from '../ActionDTO';
 
 interface DialogStates {
   [key: string]: boolean;

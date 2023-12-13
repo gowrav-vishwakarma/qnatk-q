@@ -25,11 +25,8 @@
 
 <script lang="ts" setup>
 import { watch } from 'vue';
-import { useAutocomplete } from 'components/qnatk/composibles/use-autocomplete';
-import {
-  autoCompletePropTypes,
-  ModelOptions,
-} from 'components/qnatk/QnatkListDTO';
+import { useAutocomplete } from '../composibles/use-autocomplete';
+import { autoCompletePropTypes, ModelOptions } from '../QnatkListDTO';
 
 const props = defineProps({
   ...autoCompletePropTypes,
