@@ -135,6 +135,7 @@
 import { computed, reactive, toRefs } from 'vue';
 import { useForm } from '../composibles/use-form';
 import { ActionListDTO } from '../ActionDTO';
+import { AxiosInstance } from 'axios';
 
 interface DialogStates {
   [key: string]: boolean;
@@ -165,6 +166,11 @@ const props = defineProps({
   actionUnavailableBehavior: {
     type: String,
     default: 'disable', // or 'hide'
+  },
+
+  api: {
+    type: Function,
+    required: true,
   },
 });
 
@@ -201,26 +207,26 @@ const toggleDialog = (actionName, open = true) => {
   dialogStates[actionName] = open;
 };
 
-const onSuccess = (data) => {
+// Outside the handleConfirmation method
+const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
+  useForm(
+    props.api(),
+    `/qnatk/${props.baseModel}/actionExecute`,
+    {} // Initialize with empty object or default values
+  );
+
+callbacks.onSuccess = (data) => {
   isLoading.value = false; // Reset loading state
   errors.value = {}; // Reset errors
   console.log('Success:', data);
   // Handle success (e.g., show success message, refresh data)
 };
 
-const onError = (error) => {
+callbacks.onError = (error) => {
   isLoading.value = false; // Reset loading state
   console.log('Error:', error);
   // Handle error (e.g., show error message)
 };
-
-// Outside the handleConfirmation method
-const { values, validateAndSubmit, isLoading, errors, updateUrl } = useForm(
-  `/qnatk/${props.baseModel}/actionExecute`,
-  {}, // Initialize with empty object or default values
-  onSuccess,
-  onError
-);
 
 // Inside SingleRecordActions setup
 const handleConfirmation = async (action) => {
