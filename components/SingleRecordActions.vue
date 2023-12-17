@@ -215,13 +215,6 @@ const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
     {} // Initialize with empty object or default values
   );
 
-callbacks.onSuccess = (data) => {
-  isLoading.value = false; // Reset loading state
-  errors.value = {}; // Reset errors
-  console.log('Success:', data);
-  // Handle success (e.g., show success message, refresh data)
-};
-
 callbacks.onError = (error) => {
   isLoading.value = false; // Reset loading state
   console.log('Error:', error);
@@ -234,6 +227,16 @@ const handleConfirmation = async (action) => {
   // Prepare the form data
   values.value = { action: action, record: props.record }; // Update form data
 
+  callbacks.onSuccess = (data) => {
+    isLoading.value = false; // Reset loading state
+    errors.value = {}; // Reset errors
+    console.log('Success:', data);
+    if (data.modelInstance) {
+      emit('action-completed', { action, modelInstance: data.modelInstance }); // Emitting the event
+    }
+    // Handle success (e.g., show success message, refresh data)
+  };
+
   if (customConfirmations.value[action.name]) {
     // Custom confirmation logic
     customConfirmations.value[action.name](action, props.record, () =>
@@ -245,7 +248,6 @@ const handleConfirmation = async (action) => {
     await validateAndSubmit(); // Submit the form
     if (Object.keys(errors.value).length === 0 && !isLoading.value) {
       toggleDialog(action.name, false);
-      emit('action-completed', action.name); // Emitting the event
     }
   }
 };
