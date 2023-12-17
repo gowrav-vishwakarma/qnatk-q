@@ -11,7 +11,8 @@ export function useForm(
   api: AxiosInstance, // Add the AxiosInstance parameter
   initialUrl: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  defaultValues: Record<string, any>
+  defaultValues: Record<string, any>,
+  isDeveloping = false
 ) {
   const $q = useQuasar();
   const values = ref({ ...defaultValues });
@@ -27,7 +28,9 @@ export function useForm(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (_error: any) => {},
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    beforeSubmit: (_values: Record<string, unknown>) => {},
+    beforeSubmit: (
+      _values: Record<string, unknown>
+    ): void | Record<string, unknown> => {},
   });
 
   // Function to update the URL
@@ -56,7 +59,10 @@ export function useForm(
     errors.value = {};
     isLoading.value = true;
 
-    callbacks.beforeSubmit(values.value);
+    let data_to_submit = callbacks.beforeSubmit(values.value);
+    if (!data_to_submit) {
+      data_to_submit = values.value;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let payload: FormData | Record<string, any>;
@@ -64,7 +70,7 @@ export function useForm(
 
     if (hasFiles) {
       payload = new FormData();
-      Object.entries(values.value).forEach(([key, value]) => {
+      Object.entries(data_to_submit).forEach(([key, value]) => {
         if (isFile(value)) {
           payload.append(key, value);
         } else if (Array.isArray(value) && value.some(isFile)) {
@@ -87,7 +93,7 @@ export function useForm(
         }
       });
     } else {
-      payload = values.value;
+      payload = data_to_submit;
     }
 
     const config: AxiosRequestConfig = {
@@ -99,7 +105,7 @@ export function useForm(
     try {
       const response = await api.post(url.value, payload, config);
       $q.notify({ color: 'positive', message: 'Form submitted successfully!' });
-      values.value = { ...defaultValues };
+      if (!isDeveloping) values.value = { ...defaultValues };
       callbacks.onSuccess(response.data);
     } catch (error) {
       callbacks.onError(error);
