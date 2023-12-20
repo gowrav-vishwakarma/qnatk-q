@@ -225,7 +225,7 @@ callbacks.onError = (error) => {
 const handleConfirmation = async (action) => {
   updateUrl(`/qnatk/${props.baseModel}/actionExecute/${action.name}`);
   // Prepare the form data
-  values.value = { action: action, record: props.record }; // Update form data
+  values.value = props.record; // Update form data
 
   callbacks.onSuccess = (data) => {
     isLoading.value = false; // Reset loading state

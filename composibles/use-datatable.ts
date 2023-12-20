@@ -1,7 +1,12 @@
 import { ref, watch } from 'vue';
-import { ModelOptions, PaginationOption, TransformedSortOption } from '../QnatkListDTO';
+import {
+  ModelOptions,
+  PaginationOption,
+  TransformedSortOption,
+} from '../QnatkListDTO';
 import { useQuasar } from 'quasar';
 import { AxiosInstance } from 'axios';
+import { ActionListDTO } from '../ActionDTO';
 
 interface RequestProps {
   pagination: {
@@ -17,10 +22,17 @@ interface RequestProps {
   getCellValue: (col: any, row: any) => any;
 }
 
-export function useDatatable<T>(api: AxiosInstance, baseModel: string, baseUrl = 'qnatk', transformSortBy: (sortBy: string) => string | TransformedSortOption = (sortBy) => sortBy) {
+export function useDatatable<T>(
+  api: AxiosInstance,
+  baseModel: string,
+  baseUrl = 'qnatk',
+  transformSortBy: (sortBy: string) => string | TransformedSortOption = (
+    sortBy
+  ) => sortBy
+) {
   // Default to no transformation)
   const data = ref<T[]>([]);
-  const actions = ref([]);
+  const actions = ref<ActionListDTO>({});
   const loading = ref(false);
   const error = ref(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,14 +78,18 @@ export function useDatatable<T>(api: AxiosInstance, baseModel: string, baseUrl =
     }
 
     try {
-      const response = await api.post(`${baseUrl}/${baseModel}/list-and-count`, effectiveModelOptions);
+      const response = await api.post(
+        `${baseUrl}/${baseModel}/list-and-count`,
+        effectiveModelOptions
+      );
 
       data.value = response.data.rows;
       pagination.value.rowsNumber = response.data.count;
       actions.value = response.data.actions;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-      error.value = e.response?.data.message || e.message || 'An error occurred';
+      error.value =
+        e.response?.data.message || e.message || 'An error occurred';
     } finally {
       loading.value = false;
     }
