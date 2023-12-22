@@ -40,7 +40,7 @@ export interface CheckboxField<T> extends BaseField<T> {
 
 export interface DateField<T> extends BaseField<T> {
   component: 'q-date';
-  // ... other q-date specific props
+  // ... other q-dateSystem specific props
 }
 
 // Combine all field types into a single type
