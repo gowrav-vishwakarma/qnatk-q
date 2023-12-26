@@ -223,7 +223,9 @@ callbacks.onError = (error) => {
 
 // Inside SingleRecordActions setup
 const handleConfirmation = async (action) => {
-  updateUrl(`/qnatk/${props.baseModel}/actionExecute/${action.name}`);
+  const baseModel = action.baseModel ?? props.baseModel;
+
+  updateUrl(`/qnatk/${baseModel}/actionExecute/${action.name}`);
   // Prepare the form data
   values.value = props.record; // Update form data
 

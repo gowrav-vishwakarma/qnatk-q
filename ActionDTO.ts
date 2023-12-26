@@ -79,6 +79,10 @@ export class ActionDTO {
   @IsNotEmpty()
   name!: string;
 
+  @IsOptional()
+  @IsString()
+  baseModel?: string;
+
   @IsNotEmpty()
   label!: string;
 
