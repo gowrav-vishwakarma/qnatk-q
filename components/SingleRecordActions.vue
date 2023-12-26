@@ -232,10 +232,7 @@ const handleConfirmation = async (action) => {
   callbacks.onSuccess = (data) => {
     isLoading.value = false; // Reset loading state
     errors.value = {}; // Reset errors
-    console.log('Success:', data);
-    if (data.modelInstance) {
-      emit('action-completed', { action, modelInstance: data.modelInstance }); // Emitting the event
-    }
+    emit('action-completed', { action, modelInstance: data.modelInstance }); // Emitting the event
     // Handle success (e.g., show success message, refresh data)
   };
 
