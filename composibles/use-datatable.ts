@@ -58,6 +58,16 @@ export function useDatatable<T>(
     }
   });
 
+  const computeSerialNumbers = () => {
+    const startIndex =
+      (pagination.value.page - 1) * pagination.value.rowsPerPage;
+    data.value.forEach((item, index) => {
+      // Assuming your data objects can accept a new 's_no' property
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (item as any).s_no = startIndex + index + 1; // Assign serial number to each item
+    });
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fetchData = async (options?: any) => {
     loading.value = true;
@@ -84,6 +94,7 @@ export function useDatatable<T>(
       );
 
       data.value = response.data.rows;
+      computeSerialNumbers();
       pagination.value.rowsNumber = response.data.count;
       actions.value = response.data.actions;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
