@@ -18,8 +18,8 @@ export function useFind(api: AxiosInstance, baseUrl: string) {
     try {
       const response = await api.post(`${baseUrl}/${baseModel}/list`, {
         ...findOptions,
-        limit: findOptions.limit ?? -1,
-        offset: findOptions.offset ?? 0,
+        limit: findOptions.limit ?? undefined,
+        offset: findOptions.offset ?? undefined,
       });
       data.value = response.data as T[];
     } catch (e: unknown) {
