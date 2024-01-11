@@ -6,8 +6,10 @@ import {
   ModelOptions,
   SelectOption,
 } from '../QnatkListDTO';
+import { AxiosInstance } from 'axios';
 
 export function useAutocomplete(
+  api: AxiosInstance,
   baseModel: string,
   getModelOptionsFn: AutocompleteFunction<ModelOptions>,
   getFetchInitialValueOptionsFn: AutocompleteFunction<ModelOptions>,

@@ -30,6 +30,10 @@ import { autoCompletePropTypes, ModelOptions } from '../QnatkListDTO';
 
 const props = defineProps({
   ...autoCompletePropTypes,
+  api: {
+    type: Function,
+    required:true,
+  }
 });
 
 const defaultGetModelOptionsFn = (val: string): ModelOptions => {
@@ -81,6 +85,7 @@ if (!props.baseModel) throw new Error('baseModel is required');
 // Set up autocomplete using props
 const { suggestions, isLoading, filterFn, selected, fetchInitialValue } =
   useAutocomplete(
+    props.api(),
     props.baseModel,
     props.getModelOptionsFn || defaultGetModelOptionsFn,
     props.getFetchInitialValueOptionsFn || defaultGetFetchInitialValueOptionsFn,
