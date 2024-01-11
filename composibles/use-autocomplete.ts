@@ -1,6 +1,6 @@
 // useAutocomplete.ts
 import { ref, Ref } from 'vue';
-import { api } from 'boot/axios';
+import axios, { AxiosInstance } from 'axios';
 import {
   AutocompleteFunction,
   ModelOptions,
@@ -8,6 +8,7 @@ import {
 } from '../QnatkListDTO';
 
 export function useAutocomplete(
+  api: AxiosInstance,
   baseModel: string,
   getModelOptionsFn: AutocompleteFunction<ModelOptions>,
   getFetchInitialValueOptionsFn: AutocompleteFunction<ModelOptions>,
