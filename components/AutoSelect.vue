@@ -27,14 +27,14 @@
 import { watch } from 'vue';
 import { useAutocomplete } from '../composibles/use-autocomplete';
 import { autoCompletePropTypes, ModelOptions } from '../QnatkListDTO';
-import  { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 
 const props = defineProps({
   ...autoCompletePropTypes,
   api: {
     type: Function,
     required: true,
-  }
+  },
 });
 
 const defaultGetModelOptionsFn = (val: string): ModelOptions => {
@@ -107,6 +107,8 @@ watch(
     console.log('newVal', newVal);
     if (typeof newVal === 'number' && newVal !== selected.value?.value) {
       await fetchInitialValue(newVal);
+    } else if (newVal === null) {
+      selected.value = null;
     }
   },
   { immediate: true } // Run immediately on component mount

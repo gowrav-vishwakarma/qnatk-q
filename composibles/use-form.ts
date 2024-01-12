@@ -142,6 +142,10 @@ export function useForm(
     }
   };
 
+  const resetForm = () => {
+    values.value = { ...defaultValues };
+  };
+
   return {
     values,
     errors,
@@ -149,5 +153,6 @@ export function useForm(
     updateUrl,
     validateAndSubmit,
     callbacks,
+    resetForm,
   };
 }
