@@ -1,10 +1,10 @@
-import { ref, watch } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import {
   ModelOptions,
   PaginationOption,
   TransformedSortOption,
 } from '../QnatkListDTO';
-import { useQuasar } from 'quasar';
+import { exportFile, useQuasar } from 'quasar';
 import { AxiosInstance } from 'axios';
 import { ActionListDTO } from '../ActionDTO';
 
@@ -45,6 +45,11 @@ export function useDatatable<T>(
     rowsNumber: 0,
   });
 
+  const callBacks = reactive({
+    rowIterator: (row: T) => row,
+    downloadRowIterator: (row: T) => row,
+  });
+
   const $q = useQuasar();
 
   // Centralized error handling with a watcher
@@ -58,13 +63,20 @@ export function useDatatable<T>(
     }
   });
 
-  const computeSerialNumbers = () => {
-    const startIndex =
-      (pagination.value.page - 1) * pagination.value.rowsPerPage;
-    data.value = data.value.map((item, index) => {
+  const processRows = (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any,
+    page: number | undefined = undefined,
+    rowsPerPage: number | undefined = undefined,
+    rowIterator: (row: T) => T = (row) => row,
+    addSNo = true
+  ) => {
+    const startIndex = page && rowsPerPage ? (page - 1) * rowsPerPage : 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return data.map((item: any, index: number) => {
       return {
-        s_no: startIndex + index + 1,
-        ...item,
+        s_no: addSNo ? startIndex + index + 1 : undefined,
+        ...rowIterator(item),
       };
     });
   };
@@ -95,13 +107,19 @@ export function useDatatable<T>(
       );
 
       data.value = response.data.rows;
-      computeSerialNumbers();
+      data.value = processRows(
+        data.value,
+        pagination.value.page,
+        pagination.value.rowsPerPage,
+        callBacks.rowIterator
+      );
       pagination.value.rowsNumber = response.data.count;
       actions.value = response.data.actions;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       error.value =
         e.response?.data.message || e.message || 'An error occurred';
+      console.log('error', e);
     } finally {
       loading.value = false;
     }
@@ -118,7 +136,65 @@ export function useDatatable<T>(
     return false;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const arrayToCSV = (array: any) => {
+    const header = Object.keys(array[0]).join(',');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rows = array.map((obj: any) =>
+      Object.values(obj)
+        .map((value) => (typeof value === 'string' ? `"${value}"` : value))
+        .join(',')
+    );
+    return [header, ...rows].join('\n');
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const downloadData = async (options?: any) => {
+    loading.value = true;
+    error.value = false;
+
+    // Construct the modelOptions with pagination
+    const effectiveModelOptions = {
+      ...fetchOptions.value,
+      sortByDescending: pagination.value.descending,
+      ...options,
+    };
+
+    // Apply the transformation to the sortBy, if present
+    if (pagination.value.sortBy) {
+      effectiveModelOptions.sortBy = transformSortBy(pagination.value.sortBy);
+    }
+
+    try {
+      const response = await api.post(
+        `${baseUrl}/${baseModel}/list`,
+        effectiveModelOptions
+      );
+
+      const data = processRows(
+        response.data,
+        undefined,
+        undefined,
+        callBacks.downloadRowIterator
+      );
+
+      const csvString = arrayToCSV(data);
+      const status = exportFile('file.csv', csvString, {
+        encoding: 'windows-1252',
+        mimeType: 'text/csv;charset=windows-1252;',
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      error.value =
+        e.response?.data.message || e.message || 'An error occurred';
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
+    callBacks,
     fetchOptions,
     data,
     actions,
@@ -128,5 +204,6 @@ export function useDatatable<T>(
     fetchData,
     onRequest,
     closeDialogAndReload,
+    downloadData,
   };
 }

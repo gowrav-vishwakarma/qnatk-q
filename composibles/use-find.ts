@@ -1,5 +1,6 @@
 import { Ref, ref } from 'vue';
 import axios, { AxiosInstance } from 'axios';
+import { exportFile } from 'quasar';
 
 //eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ModelOptions = any; // Replace with your actual type
@@ -65,6 +66,37 @@ export function useFind(api: AxiosInstance, baseUrl: string) {
     }
 
     return { data, error, loading };
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const arrayToCSV = (array: any) => {
+    const header = Object.keys(array[0]).join(',');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rows = array.map((obj: any) =>
+      Object.values(obj)
+        .map((value) => (typeof value === 'string' ? `"${value}"` : value))
+        .join(',')
+    );
+    return [header, ...rows].join('\n');
+  };
+
+  const downloadData = async (baseModel: string, findOptions: ModelOptions) => {
+    const downloading = ref(false);
+    const error = ref<string | null>(null);
+    const {
+      data,
+      error: findError,
+      loading,
+    } = await findAll(baseModel, findOptions);
+    if (!data.value) {
+      error.value = findError.value;
+      return;
+    }
+    const csvString = arrayToCSV(data.value);
+    const status = exportFile('file.csv', csvString, {
+      encoding: 'windows-1252',
+      mimeType: 'text/csv;charset=windows-1252;',
+    });
   };
 
   return { findAll, findOne };
