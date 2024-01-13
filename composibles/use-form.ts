@@ -55,7 +55,7 @@ export function useForm(
     return false;
   };
 
-  const validateAndSubmit = async () => {
+  const validateAndSubmit = async (resetForm = true) => {
     errors.value = {};
     isLoading.value = true;
 
@@ -105,7 +105,7 @@ export function useForm(
     try {
       const response = await api[METHOD](url.value, payload, config);
       $q.notify({ color: 'positive', message: 'Form submitted successfully!' });
-      values.value = { ...defaultValues };
+      if (resetForm) values.value = { ...defaultValues };
       callbacks.onSuccess(response.data);
     } catch (error) {
       callbacks.onError(error);
