@@ -23,14 +23,22 @@ export function useForm(
 
   // Define the callback functions in a reactive object
   const callbacks = reactive({
+    // Define a default implementation for onSuccess
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: (_data: any) => {},
+    onSuccess: async (data: any) => {
+      return data; // Return the input parameter
+    },
+    // Define a default implementation for onError
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (_error: any) => {},
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    beforeSubmit: (
-      _values: Record<string, unknown>
-    ): void | Record<string, unknown> => {},
+    onError: async (error: any) => {
+      throw error; // Throw the input error
+    },
+    // Define a default implementation for beforeSubmit
+    beforeSubmit: async (
+      values: Record<string, unknown>
+    ): Promise<Record<string, unknown>> => {
+      return values; // Return the input values
+    },
   });
 
   // Function to update the URL
@@ -59,7 +67,7 @@ export function useForm(
     errors.value = {};
     isLoading.value = true;
 
-    let data_to_submit = callbacks.beforeSubmit(values.value);
+    let data_to_submit = await callbacks.beforeSubmit(values.value);
     if (!data_to_submit) {
       data_to_submit = values.value;
     }
