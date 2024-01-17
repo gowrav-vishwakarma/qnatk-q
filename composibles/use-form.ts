@@ -34,10 +34,10 @@ export function useForm(
       throw error; // Throw the input error
     },
     // Define a default implementation for beforeSubmit
-    beforeSubmit: async (
+    beforeSubmit: (
       values: Record<string, unknown>
-    ): Promise<Record<string, unknown>> => {
-      return values; // Return the input values
+    ): Record<string, unknown> | Promise<Record<string, unknown>> => {
+      return values; // Default implementation
     },
   });
 
@@ -67,7 +67,15 @@ export function useForm(
     errors.value = {};
     isLoading.value = true;
 
-    let data_to_submit = await callbacks.beforeSubmit(values.value);
+    let data_to_submit;
+
+    // Check if beforeSubmit is asynchronous (returns a promise)
+    if (callbacks.beforeSubmit(values.value) instanceof Promise) {
+      data_to_submit = await callbacks.beforeSubmit(values.value);
+    } else {
+      data_to_submit = callbacks.beforeSubmit(values.value);
+    }
+
     if (!data_to_submit) {
       data_to_submit = values.value;
     }
