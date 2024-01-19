@@ -118,7 +118,11 @@ export class ActionDTO {
   baseModel?: string;
 
   @IsNotEmpty()
-  label!: string;
+  label?: string;
+
+  @IsOptional()
+  @IsString()
+  tooltip?: string;
 
   @IsStringOrObject({ message: 'icon must be a string or an object' })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

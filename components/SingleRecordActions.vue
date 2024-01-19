@@ -22,6 +22,7 @@
         "
         size="sm"
         @click="() => toggleDialog(action.name)"
+        :label="action.label"
       >
         <slot
           :name="`${action.name}-outer`"
