@@ -1,6 +1,13 @@
 import { reactive, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { validate } from 'class-validator';
+import {
+  classToPlain,
+  instanceToPlain,
+  plainToClass,
+  plainToInstance,
+} from 'class-transformer';
 
 type FormErrors = Record<string, string[]>;
 type ErrorResponse = {
@@ -40,6 +47,23 @@ export function useForm(
       return values; // Default implementation
     },
   });
+
+  async function validateResponse<T extends object>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any,
+    DTOClass: new () => T
+  ): Promise<T> {
+    if (!DTOClass) return data; // If no DTO class is provided, return the data as is
+
+    const dtoInstance = plainToInstance(DTOClass, data);
+    const validationErrors = await validate(dtoInstance);
+
+    if (validationErrors.length > 0) {
+      throw validationErrors; // Throw validation errors
+    }
+
+    return instanceToPlain(dtoInstance) as T; // Return the transformed and validated data
+  }
 
   // Function to update the URL
   const updateUrl = (newUrl: string) => {
@@ -122,9 +146,9 @@ export function useForm(
       const response = await api[METHOD](url.value, payload, config);
       $q.notify({ color: 'positive', message: 'Form submitted successfully!' });
       if (resetForm) values.value = { ...defaultValues };
-      callbacks.onSuccess(response.data);
+      await callbacks.onSuccess(response.data);
     } catch (error) {
-      callbacks.onError(error);
+      await callbacks.onError(error);
       console.error(error);
       if (axios.isAxiosError(error) && error.response) {
         const errorResponse = error.response.data as ErrorResponse;
@@ -168,6 +192,7 @@ export function useForm(
     isLoading,
     updateUrl,
     validateAndSubmit,
+    validateResponse,
     callbacks,
     resetForm,
   };
