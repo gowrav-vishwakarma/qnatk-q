@@ -25,7 +25,7 @@ export function useForm(
   const callbacks = reactive({
     // Define a default implementation for onSuccess
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: async (data: any) => {
+    onSuccess: (data: any): any | Promise<any> => {
       return data; // Return the input parameter
     },
     // Define a default implementation for onError
