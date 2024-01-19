@@ -5,8 +5,42 @@ import {
   IsObject,
   IsArray,
   IsOptional,
+  Validate,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  registerDecorator,
+  ValidationOptions,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+@ValidatorConstraint({ name: 'isStringOrObject', async: false })
+export class IsStringOrObjectConstraint
+  implements ValidatorConstraintInterface
+{
+  validate(value: unknown, args: ValidationArguments) {
+    return (
+      typeof value === 'string' || (typeof value === 'object' && value !== null)
+    );
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    return 'icon must be a string or an object';
+  }
+}
+
+export function IsStringOrObject(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'isStringOrObject',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      constraints: [],
+      validator: IsStringOrObjectConstraint,
+    });
+  };
+}
 
 class UIOptionsDTO {
   @IsString()
@@ -46,7 +80,7 @@ class FieldSchema {
 
   @IsOptional()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  defaultValue!: any;
+  defaultValue: any;
 
   @IsOptional()
   @IsArray()
@@ -86,12 +120,14 @@ export class ActionDTO {
   @IsNotEmpty()
   label!: string;
 
-  @IsNotEmpty()
-  icon!: string;
+  @IsStringOrObject({ message: 'icon must be a string or an object' })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon!: string | Record<string, any>;
 
-  @IsString()
+  @IsStringOrObject({ message: 'icon color must be a string or an object' })
   @IsOptional()
-  iconColor?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  iconColor?: string | Record<string, any>;
 
   @IsNotEmpty()
   description!: string;
@@ -123,4 +159,4 @@ export class ActionDTO {
   returnModel: Record<string, any> | boolean = false;
 }
 
-export type ActionListDTO = Record<string, ActionDTO[]>;
+export type ActionListDTO = Record<string, ActionDTO>;

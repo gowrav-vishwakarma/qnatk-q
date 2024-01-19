@@ -13,12 +13,12 @@
         "
         dense
         flat
-        :icon="action.icon"
+        :icon="getIcon(action, props.record)"
         :color="
           actionUnavailableBehavior === 'disable' &&
           !checkCondition(action, props.record)
             ? 'grey'
-            : action.iconColor ?? 'primary'
+            : getIconColor(action, props.record)
         "
         size="sm"
         @click="() => toggleDialog(action.name)"
@@ -155,6 +155,10 @@ const props = defineProps({
     type: Object as () => ActionListDTO,
     required: true,
   },
+  visibleActions: {
+    type: Array as () => string[],
+    default: () => [],
+  },
   record: {
     type: Object,
     required: true,
@@ -190,7 +194,13 @@ const checkCondition = (action: ActionStructure, record) => {
 };
 
 const singleRecordActions = computed(() => {
-  return Object.keys(props.actions)
+  const actionKeys = Object.keys(props.actions);
+  const filteredKeys =
+    props.visibleActions.length > 0
+      ? actionKeys.filter((key) => props.visibleActions.includes(key))
+      : actionKeys;
+
+  return filteredKeys
     .filter((key) => props.actions[key].mode === 'SingleRecord')
     .map((key) => props.actions[key]);
 });
@@ -207,6 +217,35 @@ const toggleDialog = (actionName, open = true) => {
   dialogStates[actionName] = open;
 };
 
+const getIcon = (action, record) => {
+  console.log(action, record);
+  if (typeof action.icon === 'string') {
+    return action.icon; // Return the string directly if it's a string
+  } else if (typeof action.icon === 'object') {
+    // Iterate through the object keys and check conditions
+    for (const [key, condition] of Object.entries(action.icon)) {
+      if (checkCondition({ condition }, record)) {
+        return key; // Return the key (icon) that matches the condition
+      }
+    }
+  }
+  return null; // Default icon or handle this case as needed
+};
+
+const getIconColor = (action, record) => {
+  if (typeof action.iconColor === 'string') {
+    return action.iconColor; // Return the string directly if it's a string
+  } else if (typeof action.iconColor === 'object') {
+    // Iterate through the object keys and check conditions
+    for (const [key, condition] of Object.entries(action.iconColor)) {
+      if (checkCondition({ condition }, record)) {
+        return key; // Return the key (icon) that matches the condition
+      }
+    }
+  }
+  return 'primary'; // Default icon or handle this case as needed
+};
+
 // Outside the handleConfirmation method
 const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
   useForm(
@@ -218,7 +257,6 @@ const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
 callbacks.onError = (error) => {
   isLoading.value = false; // Reset loading state
   console.log('Error:', error);
-  // Handle error (e.g., show error message)
 };
 
 // Inside SingleRecordActions setup
