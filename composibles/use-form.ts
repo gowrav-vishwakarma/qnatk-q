@@ -33,11 +33,39 @@ export function useForm(
     // Define a default implementation for onSuccess
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSuccess: (data: any): any | Promise<any> => {
+      $q.notify({ color: 'positive', message: 'Form submitted successfully!' });
       return data; // Return the input parameter
     },
     // Define a default implementation for onError
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: async (error: any) => {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorResponse = error.response.data as ErrorResponse;
+        if (errorResponse && errorResponse.errors) {
+          errors.value = errorResponse.errors;
+          Object.entries(errors.value).forEach(([field, messages]) => {
+            if (!(field in defaultValues)) {
+              $q.notify({
+                color: 'negative',
+                message: `${field}: ${messages.join('; ')}`,
+              });
+            }
+          });
+        } else {
+          $q.notify({
+            color: 'negative',
+            message:
+              error.response.data.statusCode +
+              ' ' +
+              error.response.data.message,
+          });
+        }
+      } else {
+        $q.notify({
+          color: 'negative',
+          message: 'An unexpected error occurred.',
+        });
+      }
       throw error; // Throw the input error
     },
     // Define a default implementation for beforeSubmit
@@ -144,39 +172,11 @@ export function useForm(
 
     try {
       const response = await api[METHOD](url.value, payload, config);
-      $q.notify({ color: 'positive', message: 'Form submitted successfully!' });
       if (resetForm) values.value = { ...defaultValues };
       await callbacks.onSuccess(response.data);
     } catch (error) {
       await callbacks.onError(error);
       console.error(error);
-      if (axios.isAxiosError(error) && error.response) {
-        const errorResponse = error.response.data as ErrorResponse;
-        if (errorResponse && errorResponse.errors) {
-          errors.value = errorResponse.errors;
-          Object.entries(errors.value).forEach(([field, messages]) => {
-            if (!(field in defaultValues)) {
-              $q.notify({
-                color: 'negative',
-                message: `${field}: ${messages.join('; ')}`,
-              });
-            }
-          });
-        } else {
-          $q.notify({
-            color: 'negative',
-            message:
-              error.response.data.statusCode +
-              ' ' +
-              error.response.data.message,
-          });
-        }
-      } else {
-        $q.notify({
-          color: 'negative',
-          message: 'An unexpected error occurred.',
-        });
-      }
     } finally {
       isLoading.value = false;
     }

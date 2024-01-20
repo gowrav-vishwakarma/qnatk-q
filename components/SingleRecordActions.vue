@@ -22,7 +22,7 @@
         "
         size="sm"
         @click="() => toggleDialog(action.name)"
-        :label="action.label"
+        :label="getLabel(action, props.record)"
       >
         <slot
           :name="`${action.name}-outer`"
@@ -245,6 +245,20 @@ const getIconColor = (action, record) => {
     }
   }
   return 'primary'; // Default icon or handle this case as needed
+};
+
+const getLabel = (action, record) => {
+  if (typeof action.label === 'string') {
+    return action.label; // Return the string directly if it's a string
+  } else if (typeof action.label === 'object') {
+    // Iterate through the object keys and check conditions
+    for (const [key, condition] of Object.entries(action.label)) {
+      if (checkCondition({ condition }, record)) {
+        return key; // Return the key (icon) that matches the condition
+      }
+    }
+  }
+  return null; // Default icon or handle this case as needed
 };
 
 // Outside the handleConfirmation method
