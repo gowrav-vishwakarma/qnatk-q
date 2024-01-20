@@ -269,10 +269,10 @@ const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
     {} // Initialize with empty object or default values
   );
 
-callbacks.onError = (error) => {
-  isLoading.value = false; // Reset loading state
-  console.log('Error:', error);
-};
+// callbacks.onError = (error) => {
+//   isLoading.value = false; // Reset loading state
+//   console.log('Error:', error);
+// };
 
 // Inside SingleRecordActions setup
 const handleConfirmation = async (action) => {
