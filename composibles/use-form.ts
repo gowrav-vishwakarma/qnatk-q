@@ -38,7 +38,7 @@ export function useForm(
     },
     // Define a default implementation for onError
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: async (error: any) => {
+    onError: async (error: any): Promise<never> => {
       if (axios.isAxiosError(error) && error.response) {
         const errorResponse = error.response.data as ErrorResponse;
         if (errorResponse && errorResponse.errors) {

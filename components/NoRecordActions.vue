@@ -133,6 +133,11 @@ const props = defineProps({
     type: Object, // Object mapping action names to functions
     default: () => ({}),
   },
+
+  api: {
+    type: Function,
+    required: true,
+  },
 });
 
 const emit = defineEmits(['action-completed']);
@@ -157,26 +162,26 @@ const toggleDialog = (actionName, open = true) => {
   dialogStates[actionName] = open;
 };
 
-const onSuccess = (data) => {
+// Outside the handleConfirmation method
+const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
+  useForm(
+    props.api(),
+    `/qnatk/${props.baseModel}/execute-action`,
+    {} // Initialize with empty object or default values
+  );
+
+callbacks.onSuccess = (data) => {
   isLoading.value = false; // Reset loading state
   errors.value = {}; // Reset errors
   console.log('Success:', data);
   // Handle success (e.g., show success message, refresh data)
 };
 
-const onError = (error) => {
+callbacks.onError = (error) => {
   isLoading.value = false; // Reset loading state
   console.log('Error:', error);
   // Handle error (e.g., show error message)
 };
-
-// Outside the handleConfirmation method
-const { values, validateAndSubmit, isLoading, errors, updateUrl } = useForm(
-  `/qnatk/${props.baseModel}/execute-action`,
-  {}, // Initialize with empty object or default values
-  onSuccess,
-  onError
-);
 
 // Inside SingleRecordActions setup
 const handleConfirmation = async (action) => {
