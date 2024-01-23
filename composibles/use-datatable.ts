@@ -48,6 +48,7 @@ export function useDatatable<T>(
   const callBacks = reactive({
     rowIterator: (row: T) => row,
     downloadRowIterator: (row: T) => row,
+    aclCan: (actionName: string, baseModel: string): boolean => true, // default implementation
   });
 
   const $q = useQuasar();
@@ -114,7 +115,15 @@ export function useDatatable<T>(
         callBacks.rowIterator
       );
       pagination.value.rowsNumber = response.data.count;
-      actions.value = response.data.actions;
+      const filteredActions: ActionListDTO = {};
+      Object.entries(response.data.actions as ActionListDTO).forEach(
+        ([key, action]) => {
+          if (callBacks.aclCan(key, baseModel)) {
+            filteredActions[key] = action;
+          }
+        }
+      );
+      actions.value = filteredActions;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       error.value =
