@@ -129,6 +129,7 @@
         </slot>
       </q-btn>
     </template>
+    <slot />
   </q-btn-group>
 </template>
 
