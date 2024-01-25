@@ -1,15 +1,10 @@
 <template>
-  <div class="row">
-    <span v-for="component in visibleComponents" :key="component.name">
-      <q-select
-        v-if="component.operators"
-        dense
-        v-model="componentCurrentOperators[component.field]"
-        :options="component.operators.map((op) => ({ label: op, value: op }))"
-        class="q-mr-sm"
-        emit-value
-        @update:model-value="operatorChanged(component.field, $event)"
-      />
+  <div class="row inline q-col-gutter-sm">
+    <span
+      v-for="component in visibleComponents"
+      :key="component.name"
+      class="flex"
+    >
       <component
         dense
         :is="component.component"
@@ -23,12 +18,44 @@
           component.type === 'date'
         "
       />
+      <q-select
+        v-if="component.operators && component.operators.length > 1"
+        dense
+        v-model="componentCurrentOperators[component.field]"
+        :options="component.operators.map((op) => ({ label: op, value: op }))"
+        class="q-mr-sm"
+        emit-value
+        @update:model-value="operatorChanged(component.field, $event)"
+      />
     </span>
-    <q-btn label="Filter" @click="executeFilter" />
+    <q-btn-dropdown
+      split
+      label="Filter"
+      @click="executeFilter"
+      size="sm"
+      style="align-self: center"
+    >
+      <q-list>
+        <q-item
+          clickable
+          v-for="component in localFilterOptions"
+          :key="component.field"
+          v-close-popup
+          @click="toggleFilterVisibility(component.field)"
+        >
+          <q-item-section side
+            ><q-icon name="add" v-if="component.visible"
+          /></q-item-section>
+          <q-item-section>
+            <q-item-label>{{ component.field }}</q-item-label>
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </q-btn-dropdown>
   </div>
 </template>
 <script setup lang="ts">
-import { computed, reactive } from 'vue';
+import { computed, reactive, watch, watchEffect } from 'vue';
 
 const props = defineProps({
   filterOptions: {
@@ -53,20 +80,71 @@ const emits = defineEmits([
   'update:fetchDataFunction',
 ]);
 
-const visibleComponents = computed(() => {
-  return props.filterOptions.filter((option) => option.visible);
-});
+const localFilterOptions = reactive([...props.filterOptions]);
+
+const toggleFilterVisibility = (componentField) => {
+  const component = localFilterOptions.find(
+    (opt) => opt.field === componentField
+  );
+  if (component) {
+    // Toggle the visibility
+    component.visible = !component.visible;
+
+    if (component.visible) {
+      // If the component is now visible, update or add entries
+      componentCurrentOperators[componentField] =
+        component.currentOperator || component.operators[0];
+      if (!(componentField in localValues)) {
+        localValues[componentField] = component.defaultValues || '';
+      }
+    } else {
+      // If the component is now not visible, remove its entries
+      if (componentField in componentCurrentOperators) {
+        delete componentCurrentOperators[componentField];
+      }
+      if (componentField in localValues) {
+        delete localValues[componentField];
+      }
+    }
+  }
+};
 
 const componentCurrentOperators = reactive({});
 const localValues = reactive({});
 
-visibleComponents.value.forEach((component) => {
-  // Initialize operators and values for each component
-  componentCurrentOperators[component.field] =
-    component.currentOperator || component.operators[0];
-
-  localValues[component.field] = component.defaultValues || '';
+const visibleComponents = computed(() => {
+  return localFilterOptions.filter((option) => option.visible);
 });
+
+watch(
+  localFilterOptions,
+  (newOptions) => {
+    newOptions.forEach((component) => {
+      // Update componentCurrentOperators
+      if (component.field in componentCurrentOperators) {
+        // If it already exists, update it only if the currentOperator has changed
+        if (
+          component.currentOperator &&
+          componentCurrentOperators[component.field] !==
+            component.currentOperator
+        ) {
+          componentCurrentOperators[component.field] =
+            component.currentOperator;
+        }
+      } else {
+        // If it does not exist, add it
+        componentCurrentOperators[component.field] =
+          component.currentOperator || component.operators[0];
+      }
+
+      // Update localValues
+      if (!(component.field in localValues)) {
+        localValues[component.field] = component.defaultValues || '';
+      }
+    });
+  },
+  { deep: true }
+);
 
 const operatorChanged = (field, operator) => {
   componentCurrentOperators[field] = operator;
@@ -77,6 +155,7 @@ const operatorChanged = (field, operator) => {
 
 // Storing the initial state of fetchOptions
 const initialFetchOptions = JSON.parse(JSON.stringify(props.fetchOptions));
+const originalFilterOptions = JSON.parse(JSON.stringify(props.filterOptions));
 
 // Helper function to build condition based on operator
 const buildCondition = (conditionTemplate, value, operator) => {
@@ -153,51 +232,58 @@ const handleIncludes = (
 const executeFilter = () => {
   console.log('executeFilter');
   let updatedFetchOptions = JSON.parse(JSON.stringify(initialFetchOptions));
+  const filterOptions = JSON.parse(JSON.stringify(originalFilterOptions));
 
-  props.filterOptions.forEach((filterOption) => {
-    let fieldValue = localValues[filterOption.field];
-    const currentOperator = componentCurrentOperators[filterOption.field];
+  filterOptions
+    .filter((opt) => opt.visible)
+    .forEach((filterOption) => {
+      let fieldValue = localValues[filterOption.field];
+      const currentOperator = componentCurrentOperators[filterOption.field];
 
-    if (
-      typeof fieldValue === 'object' &&
-      fieldValue !== null &&
-      fieldValue.value !== undefined
-    ) {
-      fieldValue = fieldValue.value;
-    }
-
-    if (
-      typeof fieldValue === 'object' &&
-      fieldValue !== null &&
-      fieldValue.from
-    ) {
-      fieldValue = [fieldValue.from, fieldValue.to];
-    }
-
-    if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
-      if (filterOption.where) {
-        filterOption.where = buildCondition(
-          filterOption.where,
-          fieldValue,
-          currentOperator
-        );
-        if (!updatedFetchOptions.where) updatedFetchOptions.where = {};
-        updatedFetchOptions.where = {
-          ...updatedFetchOptions.where,
-          ...filterOption.where,
-        };
+      if (
+        typeof fieldValue === 'object' &&
+        fieldValue !== null &&
+        fieldValue.value !== undefined
+      ) {
+        fieldValue = fieldValue.value;
       }
 
-      if (filterOption.include) {
-        handleIncludes(
-          updatedFetchOptions,
-          filterOption.include,
-          fieldValue,
-          currentOperator
-        );
+      if (
+        typeof fieldValue === 'object' &&
+        fieldValue !== null &&
+        fieldValue.from
+      ) {
+        fieldValue = [fieldValue.from, fieldValue.to];
       }
-    }
-  });
+
+      if (
+        fieldValue !== undefined &&
+        fieldValue !== null &&
+        fieldValue !== ''
+      ) {
+        if (filterOption.where) {
+          filterOption.where = buildCondition(
+            filterOption.where,
+            fieldValue,
+            currentOperator
+          );
+          if (!updatedFetchOptions.where) updatedFetchOptions.where = {};
+          updatedFetchOptions.where = {
+            ...updatedFetchOptions.where,
+            ...filterOption.where,
+          };
+        }
+
+        if (filterOption.include) {
+          handleIncludes(
+            updatedFetchOptions,
+            filterOption.include,
+            fieldValue,
+            currentOperator
+          );
+        }
+      }
+    });
 
   emits('update:fetchOptions', updatedFetchOptions);
   props.fetchDataFunction();
