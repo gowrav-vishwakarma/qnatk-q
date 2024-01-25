@@ -1,5 +1,6 @@
 <template>
   <q-btn-group>
+    <slot name="beforeActions" />
     <template v-for="action in noRecordActions" :key="action.name">
       <q-btn
         flat
@@ -104,6 +105,7 @@
         </q-dialog>
       </q-btn>
     </template>
+    <slot name="afterActions" />
   </q-btn-group>
 </template>
 

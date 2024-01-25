@@ -220,7 +220,7 @@ const toggleDialog = (actionName, open = true) => {
 };
 
 const getIcon = (action, record) => {
-  console.log(action, record);
+  // console.log(action, record);
   if (typeof action.icon === 'string') {
     return action.icon; // Return the string directly if it's a string
   } else if (typeof action.icon === 'object') {
