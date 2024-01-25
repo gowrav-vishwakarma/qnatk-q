@@ -151,6 +151,7 @@ const handleIncludes = (
 
 // Main function to execute filter
 const executeFilter = () => {
+  console.log('executeFilter');
   let updatedFetchOptions = JSON.parse(JSON.stringify(initialFetchOptions));
 
   props.filterOptions.forEach((filterOption) => {
@@ -160,7 +161,7 @@ const executeFilter = () => {
     if (
       typeof fieldValue === 'object' &&
       fieldValue !== null &&
-      fieldValue.value
+      fieldValue.value !== undefined
     ) {
       fieldValue = fieldValue.value;
     }
