@@ -8,6 +8,7 @@
         :options="component.operators.map((op) => ({ label: op, value: op }))"
         class="q-mr-sm"
         emit-value
+        @update:model-value="operatorChanged(component.field, $event)"
       />
       <component
         dense
@@ -17,6 +18,10 @@
         v-model="localValues[component.field]"
         :map-options="component.bind?.['map-options']"
         :emit-value="component.bind?.['emit-value']"
+        :range="
+          componentCurrentOperators[component.field] === '$between' &&
+          component.type === 'date'
+        "
       />
     </span>
     <q-btn label="Filter" @click="executeFilter" />
@@ -62,6 +67,13 @@ visibleComponents.value.forEach((component) => {
 
   localValues[component.field] = component.defaultValues || '';
 });
+
+const operatorChanged = (field, operator) => {
+  componentCurrentOperators[field] = operator;
+  if (operator === '$between') {
+    localValues[field] = { from: localValues[field], to: localValues[field] };
+  }
+};
 
 // Storing the initial state of fetchOptions
 const initialFetchOptions = JSON.parse(JSON.stringify(props.fetchOptions));
@@ -151,6 +163,14 @@ const executeFilter = () => {
       fieldValue.value
     ) {
       fieldValue = fieldValue.value;
+    }
+
+    if (
+      typeof fieldValue === 'object' &&
+      fieldValue !== null &&
+      fieldValue.from
+    ) {
+      fieldValue = [fieldValue.from, fieldValue.to];
     }
 
     if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
