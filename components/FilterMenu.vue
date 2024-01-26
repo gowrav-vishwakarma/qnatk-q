@@ -17,6 +17,7 @@
           componentCurrentOperators[component.field] === '$between' &&
           component.type === 'date'
         "
+        v-bind="component.props"
       />
       <q-select
         v-if="component.operators && component.operators.length > 1"
