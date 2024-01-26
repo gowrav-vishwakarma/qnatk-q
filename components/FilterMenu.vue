@@ -7,8 +7,8 @@
     >
       <component
         dense
-        :is="component.component"
-        v-bind="component.props"
+        :is="getComponentByField(component.field)"
+        :error="undefined"
         class="flex"
         v-model="localValues[component.field]"
         :map-options="component.bind?.['map-options']"
@@ -29,6 +29,7 @@
       />
     </span>
     <q-btn-dropdown
+      flat
       split
       label="Filter"
       @click="executeFilter"
@@ -80,7 +81,17 @@ const emits = defineEmits([
   'update:fetchDataFunction',
 ]);
 
-const localFilterOptions = reactive([...props.filterOptions]);
+const localFilterOptions = reactive([
+  ...props.filterOptions?.map((opt) => {
+    const { component, ...rest } = opt;
+    return { ...rest };
+  }),
+]);
+
+const getComponentByField = (field) => {
+  const filterOption = props.filterOptions.find((opt) => opt.field === field);
+  return filterOption.component;
+};
 
 const toggleFilterVisibility = (componentField) => {
   const component = localFilterOptions.find(
@@ -155,7 +166,7 @@ const operatorChanged = (field, operator) => {
 
 // Storing the initial state of fetchOptions
 const initialFetchOptions = JSON.parse(JSON.stringify(props.fetchOptions));
-const originalFilterOptions = JSON.parse(JSON.stringify(props.filterOptions));
+const originalFilterOptions = JSON.parse(JSON.stringify(localFilterOptions));
 
 // Helper function to build condition based on operator
 const buildCondition = (conditionTemplate, value, operator) => {
@@ -235,7 +246,7 @@ const executeFilter = () => {
   const filterOptions = JSON.parse(JSON.stringify(originalFilterOptions));
 
   filterOptions
-    .filter((opt) => opt.visible)
+    .filter((opt) => !opt.visible)
     .forEach((filterOption) => {
       let fieldValue = localValues[filterOption.field];
       const currentOperator = componentCurrentOperators[filterOption.field];
