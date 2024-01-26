@@ -1,9 +1,9 @@
 <template>
-  <div class="row inline q-col-gutter-sm">
+  <div class="row inline q-col-gutter-x-sm">
     <span
       v-for="component in visibleComponents"
       :key="component.name"
-      class="flex"
+      class="flex bg-grey-3 q-mr-sm"
     >
       <component
         dense
@@ -36,6 +36,7 @@
       @click="executeFilter"
       size="sm"
       style="align-self: center"
+      color="primary"
     >
       <q-list>
         <q-item
@@ -46,10 +47,10 @@
           @click="toggleFilterVisibility(component.field)"
         >
           <q-item-section side
-            ><q-icon name="add" v-if="component.visible"
+            ><q-icon name="check" :color="component.visible ? 'red' : 'grey'"
           /></q-item-section>
           <q-item-section>
-            <q-item-label>{{ component.field }}</q-item-label>
+            <q-item-label>{{ component.props?.label }}</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>
