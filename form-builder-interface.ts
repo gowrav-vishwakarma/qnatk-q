@@ -1,11 +1,12 @@
 // Define the base interface for a form field
 import { AxiosInstance } from 'axios';
+import { Component } from 'vue';
 
 interface FormField {
   fieldId: string;
   dataField: string;
-  colClass: number; // Column size
-  component: string; // Replace with specific Vue component type as needed
+  colClass: string; // Column size
+  component: string | Component; // Replace with specific Vue component type as needed
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any>; // Replace 'any' with specific type as needed
 }
