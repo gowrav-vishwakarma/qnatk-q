@@ -2,7 +2,7 @@
   <div class="row inline q-col-gutter-x-sm">
     <span
       v-for="component in visibleComponents"
-      :key="component.name"
+      :key="component.field"
       class="flex bg-grey-3 q-mr-sm"
     >
       <component
@@ -58,11 +58,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, reactive, watch, watchEffect } from 'vue';
+import { computed, PropType, reactive, watch, watchEffect } from 'vue';
 
 const props = defineProps({
   filterOptions: {
-    type: Array,
+    type: Array as PropType<FilterOption[]>,
     required: true,
   },
 
@@ -83,19 +83,20 @@ const emits = defineEmits([
   'update:fetchDataFunction',
 ]);
 
-const localFilterOptions = reactive([
-  ...props.filterOptions?.map((opt) => {
+const localFilterOptions: FilterOption[] = reactive<FilterOption[]>([
+  ...props.filterOptions.map((opt) => {
     const { component, ...rest } = opt;
-    return { ...rest };
+    return { ...rest, component: '' };
   }),
 ]);
 
-const getComponentByField = (field) => {
+const getComponentByField = (field: string) => {
   const filterOption = props.filterOptions.find((opt) => opt.field === field);
+  if (!filterOption) throw new Error('Invalid field');
   return filterOption.component;
 };
 
-const toggleFilterVisibility = (componentField) => {
+const toggleFilterVisibility = (componentField: string) => {
   const component = localFilterOptions.find(
     (opt) => opt.field === componentField
   );
@@ -122,8 +123,9 @@ const toggleFilterVisibility = (componentField) => {
   }
 };
 
-const componentCurrentOperators = reactive({});
-const localValues = reactive({});
+const componentCurrentOperators = reactive<Record<string, Operator>>({});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const localValues = reactive<Record<string, any>>({});
 
 const visibleComponents = computed(() => {
   return localFilterOptions.filter((option) => option.visible);
@@ -159,7 +161,7 @@ watch(
   { deep: true }
 );
 
-const operatorChanged = (field, operator) => {
+const operatorChanged = (field: string, operator: Operator) => {
   componentCurrentOperators[field] = operator;
   if (operator === '$between') {
     localValues[field] = { from: localValues[field], to: localValues[field] };
@@ -171,7 +173,13 @@ const initialFetchOptions = JSON.parse(JSON.stringify(props.fetchOptions));
 const originalFilterOptions = JSON.parse(JSON.stringify(localFilterOptions));
 
 // Helper function to build condition based on operator
-const buildCondition = (conditionTemplate, value, operator) => {
+const buildCondition = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  conditionTemplate: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value: any,
+  operator: Operator
+) => {
   let condition = JSON.parse(JSON.stringify(conditionTemplate));
 
   switch (operator) {
@@ -195,24 +203,38 @@ const buildCondition = (conditionTemplate, value, operator) => {
   return condition;
 };
 
-const replaceCondition = (condition, operator, value) => {
-  for (const key in condition) {
-    if (condition[key]['$$op$$']) {
-      condition[key] = { [operator]: value };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const replaceCondition = (condition: any, operator: Operator, value: any) => {
+  if (Array.isArray(condition)) {
+    condition.forEach((subCondition) =>
+      replaceCondition(subCondition, operator, value)
+    );
+  } else if (typeof condition === 'object' && condition !== null) {
+    for (const key in condition) {
+      if (condition[key]['$$op$$']) {
+        condition[key] = { [operator]: value };
+      } else {
+        replaceCondition(condition[key], operator, value);
+      }
     }
   }
 };
 
 const handleIncludes = (
-  mergeInInclude,
-  newIncludeObject,
-  fieldValue,
-  currentOperator
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mergeInInclude: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  newIncludeObject: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fieldValue: any,
+  currentOperator: Operator
 ) => {
   if (!mergeInInclude.include) mergeInInclude.include = [];
 
   let existingInclude = mergeInInclude.include.find(
-    (include) => include.as === newIncludeObject.as
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (include: any) => include.as === newIncludeObject.as
   );
 
   if (!existingInclude) {
@@ -248,8 +270,8 @@ const executeFilter = () => {
   const filterOptions = JSON.parse(JSON.stringify(originalFilterOptions));
 
   filterOptions
-    .filter((opt) => !opt.visible)
-    .forEach((filterOption) => {
+    .filter((opt: FilterOption) => !opt.visible)
+    .forEach((filterOption: FilterOption) => {
       let fieldValue = localValues[filterOption.field];
       const currentOperator = componentCurrentOperators[filterOption.field];
 

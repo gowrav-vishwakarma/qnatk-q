@@ -8,7 +8,8 @@ type Operator =
   | '$between'
   | '$contains'
   | '$startsWith'
-  | '$endsWith';
+  | '$endsWith'
+  | '$like';
 
 interface FilterOption {
   field: string;
@@ -19,11 +20,10 @@ interface FilterOption {
   props: Record<string, any>; // Use a more specific type if you know the structure of props
   operators: Operator[];
   currentOperator?: Operator;
-  defaultOperator?: Operator;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   defaultValues?: any; // Replace 'any' with a more specific type if possible
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  where: Record<string, any>; // Use a more specific type if you know the structure of where
+  where?: Record<string, any>; // Use a more specific type if you know the structure of where
   visible?: boolean;
   label?: string;
   includePath?: string;
