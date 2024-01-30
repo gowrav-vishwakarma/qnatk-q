@@ -18,6 +18,7 @@
           component.type === 'date'
         "
         v-bind="component.props"
+        @keydown.prevent.enter="executeFilter"
       />
       <q-select
         v-if="component.operators && component.operators.length > 1"
@@ -31,19 +32,19 @@
     </span>
     <q-btn-dropdown
       flat
+      dense
       split
       label="Filter"
       @click="executeFilter"
-      size="sm"
-      style="align-self: center"
+      size="md"
       color="primary"
+      icon="filter_list"
     >
       <q-list>
         <q-item
           clickable
           v-for="component in localFilterOptions"
           :key="component.field"
-          v-close-popup
           @click="toggleFilterVisibility(component.field)"
         >
           <q-item-section side
