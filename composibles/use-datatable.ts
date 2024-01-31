@@ -32,6 +32,7 @@ export function useDatatable<T>(
 ) {
   // Default to no transformation)
   const data = ref<T[]>([]);
+  const responseData = ref<T[]>([]);
   const actions = ref<ActionListDTO>({});
   const loading = ref(false);
   const error = ref(false);
@@ -117,6 +118,7 @@ export function useDatatable<T>(
         pagination.value.rowsPerPage,
         callBacks.rowIterator
       );
+      responseData.value = response.data;
       pagination.value.rowsNumber = response.data.count;
       const filteredActions: ActionListDTO = {};
       Object.entries(response.data.actions as ActionListDTO).forEach(
@@ -209,6 +211,7 @@ export function useDatatable<T>(
     callBacks,
     fetchOptions,
     data,
+    responseData,
     actions,
     pagination,
     loading,
