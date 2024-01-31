@@ -45,6 +45,8 @@ export function useDatatable<T>(
     rowsNumber: 0,
   });
 
+  const lacHookName = ref('');
+
   const callBacks = reactive({
     rowIterator: (row: T) => row,
     downloadRowIterator: (row: T) => row,
@@ -103,7 +105,8 @@ export function useDatatable<T>(
 
     try {
       const response = await api.post(
-        `${baseUrl}/${baseModel}/list-and-count`,
+        `${baseUrl}/${baseModel}/list-and-count` +
+          (lacHookName.value ? '/' + lacHookName.value : ''),
         effectiveModelOptions
       );
 
@@ -214,5 +217,6 @@ export function useDatatable<T>(
     onRequest,
     closeDialogAndReload,
     downloadData,
+    lacHookName,
   };
 }
