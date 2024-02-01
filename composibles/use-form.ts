@@ -14,7 +14,8 @@ type ErrorResponse = {
   errors: FormErrors;
 };
 
-export function useForm(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useForm<ResponseFormat extends object>(
   api: AxiosInstance, // Add the AxiosInstance parameter
   initialUrl: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,6 +26,7 @@ export function useForm(
   const values = ref({ ...defaultValues });
   const errors = ref<FormErrors>({});
   const isLoading = ref(false);
+  const responseData = ref<ResponseFormat>([] as unknown as ResponseFormat);
 
   const url = ref(initialUrl);
 
@@ -76,11 +78,11 @@ export function useForm(
     },
   });
 
-  async function validateResponse<T extends object>(
+  async function validateResponse(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any,
-    DTOClass: new () => T
-  ): Promise<T> {
+    DTOClass: new () => ResponseFormat
+  ): Promise<ResponseFormat> {
     if (!DTOClass) return data; // If no DTO class is provided, return the data as is
 
     const dtoInstance = plainToInstance(DTOClass, data);
@@ -90,7 +92,7 @@ export function useForm(
       throw validationErrors; // Throw validation errors
     }
 
-    return instanceToPlain(dtoInstance) as T; // Return the transformed and validated data
+    return instanceToPlain(dtoInstance) as ResponseFormat; // Return the transformed and validated data
   }
 
   // Function to update the URL
@@ -172,6 +174,7 @@ export function useForm(
 
     try {
       const response = await api[METHOD](url.value, payload, config);
+      responseData.value = response.data;
       if (resetForm) values.value = { ...defaultValues };
       await callbacks.onSuccess(response.data);
     } catch (error) {
@@ -193,6 +196,7 @@ export function useForm(
     updateUrl,
     validateAndSubmit,
     validateResponse,
+    responseData,
     callbacks,
     resetForm,
   };
