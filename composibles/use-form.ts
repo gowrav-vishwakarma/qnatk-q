@@ -1,4 +1,4 @@
-import { reactive, ref } from 'vue';
+import { reactive, Ref, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { validate } from 'class-validator';
@@ -26,7 +26,9 @@ export function useForm<ResponseFormat extends object>(
   const values = ref({ ...defaultValues });
   const errors = ref<FormErrors>({});
   const isLoading = ref(false);
-  const responseData = ref<ResponseFormat>([] as unknown as ResponseFormat);
+  const responseData = ref<ResponseFormat | ResponseFormat[]>(
+    [] as unknown as ResponseFormat[]
+  );
 
   const url = ref(initialUrl);
 
