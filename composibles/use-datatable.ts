@@ -50,7 +50,7 @@ export function useDatatable<T>(
 
   const callBacks = reactive({
     rowIterator: (row: T) => row,
-    downloadRowIterator: (row: T) => row,
+    downloadRowIterator: null as ((row: T) => T) | null,
     aclCan: (actionName: string, baseModel: string): boolean => true, // default implementation
   });
 
@@ -66,6 +66,25 @@ export function useDatatable<T>(
       });
     }
   });
+
+  const defaultDownloadRowIterator = (row: T) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const flattenObject = (obj: any, parentKey = '', res: any = {}) => {
+      for (const [key, value] of Object.entries(obj)) {
+        const newKey = parentKey ? `${parentKey}_${key}` : key;
+
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          flattenObject(value, newKey, res);
+        } else if (Array.isArray(value)) {
+          res[newKey + '_count'] = value.length;
+        } else {
+          res[newKey] = value;
+        }
+      }
+      return res;
+    };
+    return flattenObject(row);
+  };
 
   const processRows = (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,7 +138,9 @@ export function useDatatable<T>(
         callBacks.rowIterator
       );
       responseData.value = response.data;
-      pagination.value.rowsNumber = response.data.count;
+      pagination.value.rowsNumber = Array.isArray(response.data.count)
+        ? response.data.count.length
+        : response.data.count;
       const filteredActions: ActionListDTO = {};
       Object.entries(response.data.actions as ActionListDTO).forEach(
         ([key, action]) => {
@@ -189,7 +210,7 @@ export function useDatatable<T>(
         response.data,
         undefined,
         undefined,
-        callBacks.downloadRowIterator
+        callBacks.downloadRowIterator || defaultDownloadRowIterator
       );
 
       const csvString = arrayToCSV(data);
