@@ -65,7 +65,9 @@ export type TransformedSortOption = [
 ];
 
 export const autoCompletePropTypes = {
-  modelValue: [Number, Object],
+  modelValue: [Number, Object, null] as PropType<
+    number | Record<string, unknown> | null
+  >,
   label: {
     type: String,
   },
