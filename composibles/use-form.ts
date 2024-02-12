@@ -123,14 +123,8 @@ export function useForm<ResponseFormat extends object>(
     errors.value = {};
     isLoading.value = true;
 
-    let data_to_submit;
-
     // Check if beforeSubmit is asynchronous (returns a promise)
-    if (callbacks.beforeSubmit(values.value) instanceof Promise) {
-      data_to_submit = await callbacks.beforeSubmit(values.value);
-    } else {
-      data_to_submit = callbacks.beforeSubmit(values.value);
-    }
+    let data_to_submit = await callbacks.beforeSubmit(values.value);
 
     if (!data_to_submit) {
       data_to_submit = values.value;
