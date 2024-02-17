@@ -1,6 +1,10 @@
 <template>
   <q-card>
-    <q-card-section><div class="text-h6">Title here</div> </q-card-section>
+    <q-card-section
+      ><slot name="title"
+        ><div class="text-h6">Title here: slot #title</div></slot
+      >
+    </q-card-section>
     <q-form class="q-gutter-xs" @submit.prevent="validateAndSubmit">
       <q-card-section>
         <div class="row q-col-gutter-md">
@@ -32,9 +36,9 @@
 </template>
 
 <script setup lang="ts">
-import { FormConfig } from 'components/qnatk/form-builder-interface';
-import { useForm } from 'components/qnatk/composibles/use-form';
-import { computed, reactive } from 'vue';
+import { FormConfig } from '../form-builder-interface';
+import { useForm } from '../composibles/use-form';
+import { computed, reactive, toRefs } from 'vue';
 
 const props = defineProps({
   formConfig: {
@@ -47,6 +51,8 @@ const props = defineProps({
   },
 });
 
+const { initData } = toRefs(props);
+
 const getNestedValue = (path, dataObject) => {
   return path.split('.').reduce((value, key) => {
     if (value && typeof value === 'object') {
@@ -56,7 +62,8 @@ const getNestedValue = (path, dataObject) => {
   }, dataObject);
 };
 
-const defaultValues = reactive({});
+const defaultValues = reactive({ ...initData.value });
+
 props.formConfig.formFields.forEach((field) => {
   defaultValues[field.fieldId] = getNestedValue(
     field.dataField,

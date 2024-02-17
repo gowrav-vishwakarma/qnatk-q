@@ -15,7 +15,7 @@ type ErrorResponse = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useForm<ResponseFormat extends object>(
+export function useForm<ResponseFormat extends Record<string, any>>(
   api: AxiosInstance, // Add the AxiosInstance parameter
   initialUrl: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
