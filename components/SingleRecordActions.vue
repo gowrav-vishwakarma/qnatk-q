@@ -21,7 +21,7 @@
             : getIconColor(action, props.record)
         "
         size="sm"
-        @click="() => toggleDialog(action.name)"
+        @click="() => handleActionClick(action)"
         :label="getLabel(action, props.record)"
       >
         <slot
@@ -215,6 +215,19 @@ const dialogStates = reactive(
   }, {})
 );
 
+const handleActionClick = (action) => {
+  // Check if there's custom confirmation logic defined for this action
+  if (customConfirmations.value[action.name]) {
+    // Execute the custom confirmation logic directly
+    customConfirmations.value[action.name](action, props.record, () =>
+      toggleDialog(action.name, false)
+    );
+  } else {
+    // No custom confirmation logic, toggle the dialog for default handling
+    toggleDialog(action.name);
+  }
+};
+
 const toggleDialog = (actionName, open = true) => {
   dialogStates[actionName] = open;
 };
@@ -290,18 +303,11 @@ const handleConfirmation = async (action) => {
     // Handle success (e.g., show success message, refresh data)
   };
 
-  if (customConfirmations.value[action.name]) {
-    // Custom confirmation logic
-    customConfirmations.value[action.name](action, props.record, () =>
-      toggleDialog(action.name, false)
-    );
-  } else {
-    // Default confirmation logic
-    console.log('Confirmed action:', action.name);
-    await validateAndSubmit(); // Submit the form
-    if (Object.keys(errors.value).length === 0 && !isLoading.value) {
-      toggleDialog(action.name, false);
-    }
+  // Default confirmation logic
+  console.log('Confirmed action:', action.name);
+  await validateAndSubmit(); // Submit the form
+  if (Object.keys(errors.value).length === 0 && !isLoading.value) {
+    toggleDialog(action.name, false);
   }
 };
 </script>
