@@ -1,5 +1,5 @@
 <template>
-  <q-btn-group>
+  <q-btn-group :class="buttonGroupClasses">
     <template v-for="action in singleRecordActions" :key="action.name">
       <q-btn
         v-if="
@@ -177,6 +177,10 @@ const props = defineProps({
   api: {
     type: Function,
     required: true,
+  },
+  buttonGroupClasses: {
+    type: String,
+    default: '',
   },
 });
 
