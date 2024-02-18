@@ -188,15 +188,25 @@ const emit = defineEmits(['action-completed']);
 
 const { customConfirmations } = toRefs(props);
 
-const checkCondition = (action: ActionStructure, record) => {
+const checkCondition = (action, record) => {
+  const evaluateCondition = (conditionValue, recordValue) => {
+    if (Array.isArray(conditionValue)) {
+      return conditionValue.includes(recordValue); // 'OR' condition
+    }
+    return conditionValue === recordValue; // Single value condition
+  };
+
   if (!action.condition) {
-    // If no condition is specified, the action is always available
-    return true;
+    return true; // If no condition is specified, the action is always available
   }
 
-  return Object.entries(action.condition).every(([key, value]) => {
-    return record[key] === value;
-  });
+  for (const [key, value] of Object.entries(action.condition)) {
+    // If any condition fails, return false
+    if (!evaluateCondition(value, record[key])) {
+      return false;
+    }
+  }
+  return true; // All conditions passed
 };
 
 const singleRecordActions = computed(() => {
