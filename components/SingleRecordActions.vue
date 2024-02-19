@@ -165,7 +165,7 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  customConfirmations: {
+  customActions: {
     type: Object, // Object mapping action names to functions
     default: () => ({}),
   },
@@ -173,7 +173,6 @@ const props = defineProps({
     type: String,
     default: 'disable', // or 'hide'
   },
-
   api: {
     type: Function,
     required: true,
@@ -186,7 +185,7 @@ const props = defineProps({
 
 const emit = defineEmits(['action-completed']);
 
-const { customConfirmations } = toRefs(props);
+const { customActions } = toRefs(props);
 
 const checkCondition = (action, record) => {
   const evaluateCondition = (conditionValue, recordValue) => {
@@ -231,9 +230,9 @@ const dialogStates = reactive(
 
 const handleActionClick = (action) => {
   // Check if there's custom confirmation logic defined for this action
-  if (customConfirmations.value[action.name]) {
+  if (customActions.value[action.name]) {
     // Execute the custom confirmation logic directly
-    customConfirmations.value[action.name](action, props.record, () =>
+    customActions.value[action.name](action, props.record, () =>
       toggleDialog(action.name, false)
     );
   } else {

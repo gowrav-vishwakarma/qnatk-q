@@ -20,7 +20,7 @@
             ? 'grey'
             : action.iconColor ?? 'primary'
         "
-        @click="() => toggleDialog(action.name)"
+        @click="() => handleActionClick(action)"
       >
         <q-dialog v-model="dialogStates[action.name]" full-width>
           <template v-if="isLoading">
@@ -148,7 +148,7 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  customConfirmations: {
+  customActions: {
     type: Object, // Object mapping action names to functions
     default: () => ({}),
   },
@@ -160,7 +160,7 @@ const props = defineProps({
 
 const emit = defineEmits(['action-completed']);
 
-const { customConfirmations } = toRefs(props);
+const { customActions } = toRefs(props);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const checkCondition = (action: ActionStructure, selectedRecords: any[]) => {
@@ -192,6 +192,19 @@ const dialogStates = reactive(
     return acc;
   }, {})
 );
+
+const handleActionClick = (action) => {
+  // Check if there's custom confirmation logic defined for this action
+  if (customActions.value[action.name]) {
+    // Execute the custom confirmation logic directly
+    customActions.value[action.name](action, props.record, () =>
+      toggleDialog(action.name, false)
+    );
+  } else {
+    // No custom confirmation logic, toggle the dialog for default handling
+    toggleDialog(action.name);
+  }
+};
 
 const toggleDialog = (actionName, open = true) => {
   dialogStates[actionName] = open;

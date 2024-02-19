@@ -7,7 +7,7 @@
         :icon="action.icon"
         :label="action.label"
         :color="action.iconColor ?? 'primary'"
-        @click="() => toggleDialog(action.name)"
+        @click="() => handleActionClick(action)"
       >
         <q-dialog v-model="dialogStates[action.name]" full-width>
           <template v-if="isLoading">
@@ -131,7 +131,7 @@ const props = defineProps({
     type: Object as () => ActionListDTO,
     required: true,
   },
-  customConfirmations: {
+  customActions: {
     type: Object, // Object mapping action names to functions
     default: () => ({}),
   },
@@ -144,7 +144,7 @@ const props = defineProps({
 
 const emit = defineEmits(['action-completed']);
 
-const { customConfirmations } = toRefs(props);
+const { customActions } = toRefs(props);
 
 const noRecordActions = computed(() => {
   return Object.keys(props.actions)
@@ -185,25 +185,32 @@ callbacks.onError = (error) => {
   // Handle error (e.g., show error message)
 };
 
+const handleActionClick = (action) => {
+  console.log('Action clicked:', action.name);
+  // Check if there's custom confirmation logic defined for this action
+  if (customActions.value[action.name]) {
+    // Execute the custom confirmation logic directly
+    customActions.value[action.name](action, () =>
+      toggleDialog(action.name, false)
+    );
+  } else {
+    // No custom confirmation logic, toggle the dialog for default handling
+    toggleDialog(action.name);
+  }
+};
+
 // Inside SingleRecordActions setup
 const handleConfirmation = async (action) => {
   updateUrl(`/qnatk/${props.baseModel}/actionExecute/${action.name}`);
   // Prepare the form data
   values.value = { action: action, records: props.records }; // Update form data
 
-  if (customConfirmations.value[action.name]) {
-    // Custom confirmation logic
-    customConfirmations.value[action.name](action, props.records, () =>
-      toggleDialog(action.name, false)
-    );
-  } else {
-    // Default confirmation logic
-    console.log('Confirmed action:', action.name);
-    await validateAndSubmit(); // Submit the form
-    if (Object.keys(errors.value).length === 0 && !isLoading.value) {
-      toggleDialog(action.name, false);
-      emit('action-completed', action.name); // Emitting the event
-    }
+  // Default confirmation logic
+  console.log('Confirmed action:', action.name);
+  await validateAndSubmit(); // Submit the form
+  if (Object.keys(errors.value).length === 0 && !isLoading.value) {
+    toggleDialog(action.name, false);
+    emit('action-completed', action.name); // Emitting the event
   }
 };
 </script>
