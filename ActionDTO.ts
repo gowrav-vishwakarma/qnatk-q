@@ -147,7 +147,12 @@ export class ActionDTO {
 
   @IsString()
   @IsOptional()
-  loadBy?: string;
+  loadBy?:
+    | string
+    | {
+        paramField: string;
+        tableField: string;
+      };
 
   @IsArray()
   @IsString({ each: true })
