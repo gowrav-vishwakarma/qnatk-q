@@ -229,6 +229,7 @@ const dialogStates = reactive(
 );
 
 const handleActionClick = (action) => {
+  console.log('Action clicked:', action.name);
   // Check if there's custom confirmation logic defined for this action
   if (customActions.value[action.name]) {
     // Execute the custom confirmation logic directly

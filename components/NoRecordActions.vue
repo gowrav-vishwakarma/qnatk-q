@@ -131,6 +131,10 @@ const props = defineProps({
     type: Object as () => ActionListDTO,
     required: true,
   },
+  visibleActions: {
+    type: Array as () => string[],
+    default: () => [],
+  },
   customActions: {
     type: Object, // Object mapping action names to functions
     default: () => ({}),
@@ -147,7 +151,12 @@ const emit = defineEmits(['action-completed']);
 const { customActions } = toRefs(props);
 
 const noRecordActions = computed(() => {
-  return Object.keys(props.actions)
+  const actionKeys = Object.keys(props.actions);
+  const filteredKeys =
+    props.visibleActions.length > 0
+      ? actionKeys.filter((key) => props.visibleActions.includes(key))
+      : actionKeys;
+  return filteredKeys
     .filter((key) => props.actions[key].mode === 'NoRecord')
     .map((key) => props.actions[key]);
 });

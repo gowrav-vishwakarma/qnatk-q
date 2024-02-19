@@ -13,6 +13,7 @@ export interface ModelOptions {
   order?: string | string[]; // Define sorting order here
   limit?: number;
   offset?: number;
+  subQuery?: boolean;
 }
 
 interface ModelInclude {
