@@ -5,7 +5,11 @@
         ><div class="text-h6">Title here: slot #title</div></slot
       >
     </q-card-section>
-    <q-form class="q-gutter-xs" @submit.prevent="validateAndSubmit">
+    <q-form
+      class="q-gutter-xs"
+      @submit.prevent="validateAndSubmit"
+      v-bind="$attrs"
+    >
       <q-card-section>
         <div class="row q-col-gutter-md">
           <div
