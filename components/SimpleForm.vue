@@ -17,6 +17,11 @@
               :is="field.component"
               v-bind="field.props"
               v-model="values[field.fieldId]"
+              :error="!!errors[field.fieldId]"
+              :error-message="
+                errors[field.fieldId] ? errors[field.fieldId].join('; ') : ''
+              "
+              :rules="getRules(field)"
             />
           </div>
         </div>
@@ -78,11 +83,18 @@ const submitUrl = computed(() => {
     : urlConfig;
 });
 
-const { values, updateUrl, validateAndSubmit, callbacks } = useForm(
+const { values, updateUrl, validateAndSubmit, callbacks, errors } = useForm(
   props.formConfig?.api(),
   submitUrl.value,
   defaultValues
 );
+
+const getRules = (field) => {
+  if (typeof field.props.rules === 'function') {
+    return field.props.rules(values);
+  }
+  return field.props.rules;
+};
 
 // Override useForm callbacks with those provided in formConfig
 if (props.formConfig?.callbacks) {
