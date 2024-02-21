@@ -86,8 +86,8 @@
                         &lt;template #{{ action.name }}="{ action, closeDialog
                         }"&gt; &lt;your-component :action="action"
                         :record="props.row" :close-dialog="closeDialog"
-                        @action-completed="fetchData"
-                        &gt;&lt;/your-component$lt; &lt;/template&gt;
+                        @action-completed="fetchData" &gt;&lt;/your-component>
+                        &lt;/template&gt;
                       </code>
                     </q-card-section>
                     <q-card-actions align="right">
