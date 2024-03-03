@@ -25,6 +25,11 @@ export function useAutocomplete(
     [key: string]: any;
   } | null> = ref(null);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function getNestedPropertyValue(obj: any, path: string): any {
+    return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  }
+
   async function performSearch(val: string, endpoint: string): Promise<void> {
     if (val.length < 2) {
       suggestions.value = [];
@@ -47,7 +52,7 @@ export function useAutocomplete(
 
       suggestions.value = response.data.map((item: SelectOption) => ({
         ...item,
-        label: item[labelFieldName] as string,
+        label: getNestedPropertyValue(item, labelFieldName) as string,
         value: item[valueFieldName] as number,
       }));
     } catch (error) {
@@ -94,7 +99,7 @@ export function useAutocomplete(
         const item = response.data[0];
         selected.value = {
           ...item,
-          label: item[labelFieldName] as string,
+          label: getNestedPropertyValue(item, labelFieldName) as string,
           value: item[valueFieldName] as number,
         };
         searchTerm.value = item[labelFieldName] as string;
