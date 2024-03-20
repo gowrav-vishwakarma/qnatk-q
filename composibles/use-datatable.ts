@@ -51,6 +51,7 @@ export function useDatatable<T>(
   const callBacks = reactive({
     rowIterator: (row: T) => row,
     downloadRowIterator: null as ((row: T) => T) | null,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     aclCan: (actionName: string, baseModel: string): boolean => true, // default implementation
   });
 
@@ -218,6 +219,8 @@ export function useDatatable<T>(
         encoding: 'windows-1252',
         mimeType: 'text/csv;charset=windows-1252;',
       });
+
+      console.log('status', status);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
