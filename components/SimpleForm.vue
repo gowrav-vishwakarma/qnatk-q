@@ -35,6 +35,7 @@
           flat
           @click.prevent="formConfig.callbacks?.onCanceled?.()"
           color="primary"
+          v-close-popup
         >
           Cancel
         </q-btn>

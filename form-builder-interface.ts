@@ -2,7 +2,7 @@
 import { AxiosInstance } from 'axios';
 import { Component } from 'vue';
 
-interface FormField {
+export interface FormField {
   fieldId: string;
   dataField: string;
   colClass: string; // Column size
