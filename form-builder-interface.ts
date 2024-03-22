@@ -9,6 +9,8 @@ export interface FormField {
   component: string | Component; // Replace with specific Vue component type as needed
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any>; // Replace 'any' with specific type as needed
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  showCondition?: (values: Record<string, any>) => boolean; // Optional visibility condition
 }
 
 interface FormCallback {

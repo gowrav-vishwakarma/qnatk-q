@@ -12,22 +12,20 @@
     >
       <q-card-section>
         <div class="row q-col-gutter-md">
-          <div
-            v-for="field in formConfig.formFields"
-            :key="field.fieldId"
-            :class="`${field.colClass}`"
-          >
-            <component
-              :is="field.component"
-              v-bind="field.props"
-              v-model="values[field.fieldId]"
-              :error="!!errors[field.fieldId]"
-              :error-message="
-                errors[field.fieldId] ? errors[field.fieldId].join('; ') : ''
-              "
-              :rules="getRules(field)"
-            />
-          </div>
+          <template v-for="field in reactiveFormFields" :key="field.fieldId">
+            <div :class="`${field.colClass}`" v-if="field.isVisible">
+              <component
+                :is="field.component"
+                v-bind="field.props"
+                v-model="values[field.fieldId]"
+                :error="!!errors[field.fieldId]"
+                :error-message="
+                  errors[field.fieldId] ? errors[field.fieldId].join('; ') : ''
+                "
+                :rules="getRules(field)"
+              />
+            </div>
+          </template>
         </div>
       </q-card-section>
       <q-card-section align="right">
@@ -71,6 +69,14 @@ const getNestedValue = (path, dataObject) => {
     return undefined;
   }, dataObject);
 };
+
+// Making form fields reactive
+const reactiveFormFields = computed(() => {
+  return props.formConfig.formFields.map((field) => ({
+    ...field,
+    isVisible: !field.showCondition || field.showCondition(values.value),
+  }));
+});
 
 const defaultValues = reactive({ ...initData.value });
 
