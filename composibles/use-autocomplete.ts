@@ -86,7 +86,7 @@ export function useAutocomplete(
     try {
       const modelOptions = getFetchInitialValueOptionsFn(id.toString());
       const response = await api.post<SelectOption[]>(
-        `qnatk/${baseModel}/list`,
+        `${url}/${baseModel}/list`,
         {
           ...modelOptions,
           limit: 10,
