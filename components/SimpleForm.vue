@@ -94,7 +94,7 @@ const submitUrl = computed(() => {
     : urlConfig;
 });
 
-const { values, updateUrl, validateAndSubmit, callbacks, errors } = useForm(
+const { values, validateAndSubmit, callbacks, errors } = useForm(
   props.formConfig?.api(),
   submitUrl.value,
   defaultValues

@@ -13,7 +13,8 @@ export function useAutocomplete(
   getModelOptionsFn: AutocompleteFunction<ModelOptions>,
   getFetchInitialValueOptionsFn: AutocompleteFunction<ModelOptions>,
   valueFieldName = 'id',
-  labelFieldName = 'name'
+  labelFieldName = 'name',
+  url = 'qnatk'
 ) {
   const searchTerm: Ref<string> = ref('');
   const suggestions: Ref<Array<{ label: string; value: number }>> = ref([]);
@@ -40,7 +41,7 @@ export function useAutocomplete(
     try {
       const modelOptions = getModelOptionsFn(val);
       const response = await api.post<SelectOption[]>(
-        `qnatk/${baseModel}${endpoint}`,
+        `${url}/${baseModel}${endpoint}`,
         {
           ...modelOptions,
           limit: 10,

@@ -137,15 +137,9 @@
 import { computed, reactive, toRefs } from 'vue';
 import { useForm } from '../composibles/use-form';
 import { ActionListDTO } from '../ActionDTO';
-import { AxiosInstance } from 'axios';
 
 interface DialogStates {
   [key: string]: boolean;
-}
-
-interface ActionStructure {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
 }
 
 const props = defineProps({

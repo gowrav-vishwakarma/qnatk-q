@@ -27,13 +27,16 @@
 import { watch } from 'vue';
 import { useAutocomplete } from '../composibles/use-autocomplete';
 import { autoCompletePropTypes, ModelOptions } from '../QnatkListDTO';
-import { AxiosInstance } from 'axios';
 
 const props = defineProps({
   ...autoCompletePropTypes,
   api: {
     type: Function,
     required: true,
+  },
+  qnatkUrl: {
+    type: String,
+    default: '/qnatk',
   },
 });
 
@@ -91,7 +94,8 @@ const { suggestions, isLoading, filterFn, selected, fetchInitialValue } =
     props.getModelOptionsFn || defaultGetModelOptionsFn,
     props.getFetchInitialValueOptionsFn || defaultGetFetchInitialValueOptionsFn,
     props.valueFieldName,
-    props.labelFieldName
+    props.labelFieldName,
+    props.qnatkUrl
   );
 
 // Function to emit the selected value
