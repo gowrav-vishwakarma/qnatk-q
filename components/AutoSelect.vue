@@ -51,6 +51,7 @@ const defaultGetModelOptionsFn = (val: string): ModelOptions => {
         ? props.include(val)
         : props.include || [],
     limit: props.limit || 10,
+    subQuery: props.subQuery || false,
   };
   // if (props.where === undefined) {
   //   modelOptions.where = { [props.labelFieldName]: { $like: `%${val}%` } };

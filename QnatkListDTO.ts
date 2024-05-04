@@ -95,6 +95,7 @@ export const autoCompletePropTypes = {
     default: undefined, // Setting default as undefined
   },
   limit: Number,
+  subQuery: Boolean,
   getModelOptionsFn: Function as PropType<(val: string) => ModelOptions>,
   getFetchInitialValueOptionsFn: Function as PropType<
     (id: string) => ModelOptions
