@@ -14,6 +14,8 @@
         <div class="row q-col-gutter-md">
           <template v-for="field in reactiveFormFields" :key="field.fieldId">
             <div :class="`${field.colClass}`" v-if="field.isVisible">
+              <span class="q-px-sm" v-if="field.props.isHeaderLabel"
+                >{{ field.props.label }} <span class="text-red">*</span></span >
               <component
                 :is="field.component"
                 v-bind="field.props"
