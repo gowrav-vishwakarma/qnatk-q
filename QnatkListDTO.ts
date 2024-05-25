@@ -6,6 +6,11 @@
 
 import { PropType } from 'vue';
 
+export interface ScopeOption {
+  name: string;
+  params: unknown[];
+}
+
 export interface ModelOptions {
   attributes?: (string | Record<string, unknown>)[]; // You can specify attributes as an array or an object
   include?: (ModelInclude | Record<string, unknown>)[]; // Include can be an array of Include objects or an object
@@ -14,6 +19,7 @@ export interface ModelOptions {
   limit?: number;
   offset?: number;
   subQuery?: boolean;
+  scope?: false | string | ScopeOption | (string | ScopeOption)[];
 }
 
 interface ModelInclude {
