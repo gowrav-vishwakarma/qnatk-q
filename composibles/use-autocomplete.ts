@@ -44,8 +44,8 @@ export function useAutocomplete(
         `${url}/${baseModel}${endpoint}`,
         {
           ...modelOptions,
-          limit: 10,
-          offset: 0,
+          limit: modelOptions.limit ?? 10,
+          offset: modelOptions.offset ?? 0,
           sortByDescending: false,
           sortBy: 'id',
         }

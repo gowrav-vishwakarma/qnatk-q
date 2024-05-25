@@ -76,6 +76,8 @@ const defaultGetFetchInitialValueOptionsFn = (id: string): ModelOptions => {
         : props.include || [],
   };
 
+  if (props.subQuery) modelOptions.subQuery = props.subQuery;
+
   if (props.whereOnInitialFetch !== false) {
     modelOptions.where = props.whereOnInitialFetch
       ? props.whereOnInitialFetch(id)
