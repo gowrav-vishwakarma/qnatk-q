@@ -59,7 +59,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, PropType, reactive, watch, watchEffect } from 'vue';
+import { computed, PropType, reactive, watch, onMounted } from 'vue';
 
 const props = defineProps({
   filterOptions: {
@@ -271,8 +271,9 @@ const executeFilter = () => {
   const filterOptions = JSON.parse(JSON.stringify(originalFilterOptions));
 
   filterOptions
-    .filter((opt: FilterOption) => !opt.visible)
+    // .filter((opt: FilterOption) => !opt.visible)
     .forEach((filterOption: FilterOption) => {
+      if (!filterOption.visible) return;
       let fieldValue = localValues[filterOption.field];
       const currentOperator = componentCurrentOperators[filterOption.field];
 
@@ -325,6 +326,16 @@ const executeFilter = () => {
   props.fetchDataFunction();
   return updatedFetchOptions;
 };
+
+onMounted(() => {
+  localFilterOptions.forEach((component) => {
+    if (component.visible) {
+      componentCurrentOperators[component.field] =
+        component.currentOperator || component.operators[0];
+      localValues[component.field] = component.defaultValues || '';
+    }
+  });
+});
 </script>
 
 <style scoped></style>
