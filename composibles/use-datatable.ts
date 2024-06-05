@@ -24,7 +24,7 @@ interface RequestProps {
 
 export function useDatatable<T>(
   api: AxiosInstance,
-  baseModel: string,
+  baseModelDefault: string,
   baseUrl = 'qnatk',
   transformSortBy: (sortBy: string) => string | TransformedSortOption = (
     sortBy
@@ -36,6 +36,7 @@ export function useDatatable<T>(
   const actions = ref<ActionListDTO>({});
   const loading = ref(false);
   const error = ref(false);
+  const baseModel = ref(baseModelDefault);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fetchOptions = ref<ModelOptions>({} as ModelOptions);
   const pagination = ref<PaginationOption>({
@@ -126,7 +127,7 @@ export function useDatatable<T>(
 
     try {
       const response = await api.post(
-        `${baseUrl}/${baseModel}/list-and-count` +
+        `${baseUrl}/${baseModel.value}/list-and-count` +
           (lacHookName.value ? '/' + lacHookName.value : ''),
         effectiveModelOptions
       );
@@ -145,7 +146,7 @@ export function useDatatable<T>(
       const filteredActions: ActionListDTO = {};
       Object.entries(response.data.actions as ActionListDTO).forEach(
         ([key, action]) => {
-          if (callBacks.aclCan(key, baseModel)) {
+          if (callBacks.aclCan(key, baseModel.value)) {
             filteredActions[key] = action;
           }
         }
@@ -203,7 +204,7 @@ export function useDatatable<T>(
 
     try {
       const response = await api.post(
-        `${baseUrl}/${baseModel}/list`,
+        `${baseUrl}/${baseModel.value}/list`,
         effectiveModelOptions
       );
 
@@ -231,6 +232,10 @@ export function useDatatable<T>(
     }
   };
 
+  const changeBaseModel = (newBaseModel: string) => {
+    baseModel.value = newBaseModel;
+  };
+
   return {
     callBacks,
     fetchOptions,
@@ -245,5 +250,6 @@ export function useDatatable<T>(
     closeDialogAndReload,
     downloadData,
     lacHookName,
+    changeBaseModel,
   };
 }
