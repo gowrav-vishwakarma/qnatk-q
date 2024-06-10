@@ -268,56 +268,57 @@ const handleIncludes = (
 const executeFilter = () => {
   console.log('executeFilter');
   let updatedFetchOptions = JSON.parse(JSON.stringify(initialFetchOptions));
-  const filterOptions = JSON.parse(JSON.stringify(originalFilterOptions));
+  const filterOptions = JSON.parse(JSON.stringify(localFilterOptions));
 
   filterOptions
     // .filter((opt: FilterOption) => !opt.visible)
     .forEach((filterOption: FilterOption) => {
-      if (!filterOption.visible) return;
-      let fieldValue = localValues[filterOption.field];
-      const currentOperator = componentCurrentOperators[filterOption.field];
+      if (filterOption.visible) {
+        let fieldValue = localValues[filterOption.field];
+        const currentOperator = componentCurrentOperators[filterOption.field];
 
-      if (
-        typeof fieldValue === 'object' &&
-        fieldValue !== null &&
-        fieldValue.value !== undefined
-      ) {
-        fieldValue = fieldValue.value;
-      }
-
-      if (
-        typeof fieldValue === 'object' &&
-        fieldValue !== null &&
-        fieldValue.from
-      ) {
-        fieldValue = [fieldValue.from, fieldValue.to];
-      }
-
-      if (
-        fieldValue !== undefined &&
-        fieldValue !== null &&
-        fieldValue !== ''
-      ) {
-        if (filterOption.where) {
-          filterOption.where = buildCondition(
-            filterOption.where,
-            fieldValue,
-            currentOperator
-          );
-          if (!updatedFetchOptions.where) updatedFetchOptions.where = {};
-          updatedFetchOptions.where = {
-            ...updatedFetchOptions.where,
-            ...filterOption.where,
-          };
+        if (
+          typeof fieldValue === 'object' &&
+          fieldValue !== null &&
+          fieldValue.value !== undefined
+        ) {
+          fieldValue = fieldValue.value;
         }
 
-        if (filterOption.include) {
-          handleIncludes(
-            updatedFetchOptions,
-            filterOption.include,
-            fieldValue,
-            currentOperator
-          );
+        if (
+          typeof fieldValue === 'object' &&
+          fieldValue !== null &&
+          fieldValue.from
+        ) {
+          fieldValue = [fieldValue.from, fieldValue.to];
+        }
+
+        if (
+          fieldValue !== undefined &&
+          fieldValue !== null &&
+          fieldValue !== ''
+        ) {
+          if (filterOption.where) {
+            filterOption.where = buildCondition(
+              filterOption.where,
+              fieldValue,
+              currentOperator
+            );
+            if (!updatedFetchOptions.where) updatedFetchOptions.where = {};
+            updatedFetchOptions.where = {
+              ...updatedFetchOptions.where,
+              ...filterOption.where,
+            };
+          }
+
+          if (filterOption.include) {
+            handleIncludes(
+              updatedFetchOptions,
+              filterOption.include,
+              fieldValue,
+              currentOperator
+            );
+          }
         }
       }
     });
