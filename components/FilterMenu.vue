@@ -290,7 +290,7 @@ const executeFilter = () => {
           fieldValue !== null &&
           fieldValue.from
         ) {
-          fieldValue = [fieldValue.from, fieldValue.to];
+          fieldValue = [fieldValue.from, fieldValue.to + ' 23:59:59'];
         }
 
         if (
