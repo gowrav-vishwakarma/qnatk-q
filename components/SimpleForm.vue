@@ -15,7 +15,8 @@
           <template v-for="field in reactiveFormFields" :key="field.fieldId">
             <div :class="`${field.colClass}`" v-if="field.isVisible">
               <span class="q-px-sm" v-if="field.props.isHeaderLabel"
-                >{{ field.props.label }} <span class="text-red">*</span></span >
+                >{{ field.props.label }} <span class="text-red">*</span></span
+              >
               <component
                 :is="field.component"
                 v-bind="field.props"
@@ -39,7 +40,13 @@
         >
           Cancel
         </q-btn>
-        <q-btn flat type="submit" color="primary">Submit</q-btn>
+        <q-btn
+          flat
+          type="submit"
+          color="primary"
+          :disable="disableMultipleSubmit && isLoading"
+          >Submit</q-btn
+        >
       </q-card-section>
     </q-form>
   </q-card>
@@ -58,6 +65,10 @@ const props = defineProps({
   initData: {
     type: Object,
     required: true,
+  },
+  disableMultipleSubmit: {
+    type: Boolean,
+    default: true,
   },
 });
 
@@ -96,7 +107,7 @@ const submitUrl = computed(() => {
     : urlConfig;
 });
 
-const { values, validateAndSubmit, callbacks, errors } = useForm(
+const { values, validateAndSubmit, callbacks, errors, isLoading } = useForm(
   props.formConfig?.api(),
   submitUrl.value,
   defaultValues
