@@ -11,6 +11,7 @@ export interface FormField {
   props: Record<string, any>; // Replace 'any' with specific type as needed
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   showCondition?: (values: Record<string, any>) => boolean; // Optional visibility condition
+  children?: FormField[];
 }
 
 interface FormCallback {

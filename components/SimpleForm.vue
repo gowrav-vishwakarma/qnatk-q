@@ -14,19 +14,56 @@
         <div class="row q-col-gutter-md">
           <template v-for="field in reactiveFormFields" :key="field.fieldId">
             <div :class="`${field.colClass}`" v-if="field.isVisible">
-              <span class="q-px-sm" v-if="field.props.isHeaderLabel"
-                >{{ field.props.label }} <span class="text-red">*</span></span
-              >
-              <component
-                :is="field.component"
-                v-bind="field.props"
-                v-model="values[field.fieldId]"
-                :error="!!errors[field.fieldId]"
-                :error-message="
-                  errors[field.fieldId] ? errors[field.fieldId].join('; ') : ''
-                "
-                :rules="getRules(field)"
-              />
+              <template v-if="field.children">
+                <component :is="field.component" v-bind="field.props">
+                  <template
+                    v-for="childField in field.children"
+                    :key="childField.fieldId"
+                  >
+                    <div
+                      :class="`${childField.colClass}`"
+                      v-if="childField.isVisible"
+                    >
+                      <span
+                        class="q-px-sm"
+                        v-if="childField.props.isHeaderLabel"
+                      >
+                        {{ childField.props.label }}
+                        <span class="text-red">*</span>
+                      </span>
+                      <component
+                        :is="childField.component"
+                        v-bind="childField.props"
+                        v-model="values[childField.fieldId]"
+                        :error="!!errors[childField.fieldId]"
+                        :error-message="
+                          errors[childField.fieldId]
+                            ? errors[childField.fieldId].join('; ')
+                            : ''
+                        "
+                        :rules="getRules(childField)"
+                      />
+                    </div>
+                  </template>
+                </component>
+              </template>
+              <template v-else>
+                <span class="q-px-sm" v-if="field.props.isHeaderLabel">
+                  {{ field.props.label }} <span class="text-red">*</span>
+                </span>
+                <component
+                  :is="field.component"
+                  v-bind="field.props"
+                  v-model="values[field.fieldId]"
+                  :error="!!errors[field.fieldId]"
+                  :error-message="
+                    errors[field.fieldId]
+                      ? errors[field.fieldId].join('; ')
+                      : ''
+                  "
+                  :rules="getRules(field)"
+                />
+              </template>
             </div>
           </template>
         </div>
@@ -88,17 +125,37 @@ const reactiveFormFields = computed(() => {
   return props.formConfig.formFields.map((field) => ({
     ...field,
     isVisible: !field.showCondition || field.showCondition(values.value),
+    children: field.children?.map((childField) => ({
+      ...childField,
+      isVisible:
+        !childField.showCondition || childField.showCondition(values.value),
+    })),
   }));
 });
 
 const defaultValues = reactive({ ...initData.value });
 
-props.formConfig.formFields.forEach((field) => {
-  defaultValues[field.fieldId] = getNestedValue(
-    field.dataField,
-    props.initData
-  );
-});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const initializeValues = (fields: any[]) => {
+  fields.forEach((field) => {
+    defaultValues[field.fieldId] = getNestedValue(
+      field.dataField,
+      props.initData
+    );
+    if (field.children) {
+      initializeValues(field.children);
+    }
+  });
+};
+
+initializeValues(props.formConfig.formFields);
+
+// props.formConfig.formFields.forEach((field) => {
+//   defaultValues[field.fieldId] = getNestedValue(
+//     field.dataField,
+//     props.initData
+//   );
+// });
 
 const submitUrl = computed(() => {
   const urlConfig = props.formConfig.submitUrl;

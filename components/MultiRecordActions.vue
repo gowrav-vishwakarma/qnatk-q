@@ -148,7 +148,15 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  api: {
+    type: Function,
+    required: true,
+  },
   customActions: {
+    type: Object, // Object mapping action names to functions
+    default: () => ({}),
+  },
+  customConfirmations: {
     type: Object, // Object mapping action names to functions
     default: () => ({}),
   },
@@ -156,11 +164,15 @@ const props = defineProps({
     type: String,
     default: 'disable', // or 'hide'
   },
+  qnatkUrl: {
+    type: String,
+    default: '/qnatk',
+  },
 });
 
 const emit = defineEmits(['action-completed']);
 
-const { customActions } = toRefs(props);
+const { customActions, customConfirmations } = toRefs(props);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const checkCondition = (action: ActionStructure, selectedRecords: any[]) => {
@@ -224,16 +236,18 @@ const onError = (error) => {
 };
 
 // Outside the handleConfirmation method
-const { values, validateAndSubmit, isLoading, errors, updateUrl } = useForm(
-  `/qnatk/${props.baseModel}/execute-action-multi-record`,
-  {}, // Initialize with empty object or default values
-  onSuccess,
-  onError
-);
+const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
+  useForm(
+    props.api(),
+    `/${props.qnatkUrl}/${props.baseModel}/execute-action-multi-record`,
+    {} // Initialize with empty object or default values
+  );
 
 // Inside SingleRecordActions setup
 const handleConfirmation = async (action) => {
-  updateUrl(`/qnatk/${props.baseModel}/bulkActionExecute/${action.name}`);
+  updateUrl(
+    `/${props.qnatkUrl}/${props.baseModel}/bulkActionExecute/${action.name}`
+  );
   // Prepare the form data
   values.value = { action: action, records: props.records }; // Update form data
 
@@ -243,6 +257,12 @@ const handleConfirmation = async (action) => {
       toggleDialog(action.name, false)
     );
   } else {
+    callbacks.onSuccess = (data) => {
+      isLoading.value = false; // Reset loading state
+      errors.value = {}; // Reset errors
+      emit('action-completed', { action, modelInstance: data.modelInstance }); // Emitting the event
+      // Handle success (e.g., show success message, refresh data)
+    };
     // Default confirmation logic
     console.log('Confirmed action:', action.name);
     await validateAndSubmit(); // Submit the form

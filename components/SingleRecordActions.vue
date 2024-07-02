@@ -175,6 +175,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  qnatkUrl: {
+    type: String,
+    default: '/qnatk',
+  },
 });
 
 const emit = defineEmits(['action-completed']);
@@ -287,7 +291,7 @@ const getLabel = (action, record) => {
 const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
   useForm(
     props.api(),
-    `/qnatk/${props.baseModel}/actionExecute`,
+    `${props.qnatkUrl}/${props.baseModel}/actionExecute`,
     {} // Initialize with empty object or default values
   );
 
@@ -300,7 +304,7 @@ const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
 const handleConfirmation = async (action) => {
   const baseModel = action.baseModel ?? props.baseModel;
 
-  updateUrl(`/qnatk/${baseModel}/actionExecute/${action.name}`);
+  updateUrl(`${props.qnatkUrl}/${baseModel}/actionExecute/${action.name}`);
   // Prepare the form data
   values.value = props.record; // Update form data
 
