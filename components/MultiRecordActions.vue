@@ -123,9 +123,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, toRefs } from 'vue';
-import { useForm } from '../composibles/use-form';
-import { ActionListDTO } from '../ActionDTO';
+import { computed, reactive, toRefs } from "vue";
+import { useForm } from "../composibles/use-form";
+import { ActionListDTO } from "../ActionDTO";
 
 interface DialogStates {
   [key: string]: boolean;
@@ -162,15 +162,15 @@ const props = defineProps({
   },
   actionUnavailableBehavior: {
     type: String,
-    default: 'disable', // or 'hide'
+    default: "disable", // or 'hide'
   },
   qnatkUrl: {
     type: String,
-    default: '/qnatk',
+    default: "/qnatk",
   },
 });
 
-const emit = defineEmits(['action-completed']);
+const emit = defineEmits(["action-completed"]);
 
 const { customActions, customConfirmations } = toRefs(props);
 
@@ -186,14 +186,18 @@ const checkCondition = (action: ActionStructure, selectedRecords: any[]) => {
 
   return selectedRecords.every((record) => {
     return Object.entries(action.condition).every(([key, value]) => {
-      return record[key] === value;
+      if (Array.isArray(value))
+        return value.includes(record[key]); // 'OR' condition (array value)
+      else {
+        return record[key] === value;
+      }
     });
   });
 };
 
 const multiRecordActions = computed(() => {
   return Object.keys(props.actions)
-    .filter((key) => props.actions[key].mode === 'MultiRecord')
+    .filter((key) => props.actions[key].mode === "MultiRecord")
     .map((key) => props.actions[key]);
 });
 
@@ -225,13 +229,13 @@ const toggleDialog = (actionName, open = true) => {
 const onSuccess = (data) => {
   isLoading.value = false; // Reset loading state
   errors.value = {}; // Reset errors
-  console.log('Success:', data);
+  console.log("Success:", data);
   // Handle success (e.g., show success message, refresh data)
 };
 
 const onError = (error) => {
   isLoading.value = false; // Reset loading state
-  console.log('Error:', error);
+  console.log("Error:", error);
   // Handle error (e.g., show error message)
 };
 
@@ -260,15 +264,15 @@ const handleConfirmation = async (action) => {
     callbacks.onSuccess = (data) => {
       isLoading.value = false; // Reset loading state
       errors.value = {}; // Reset errors
-      emit('action-completed', { action, modelInstance: data.modelInstance }); // Emitting the event
+      emit("action-completed", { action, modelInstance: data.modelInstance }); // Emitting the event
       // Handle success (e.g., show success message, refresh data)
     };
     // Default confirmation logic
-    console.log('Confirmed action:', action.name);
+    console.log("Confirmed action:", action.name);
     await validateAndSubmit(); // Submit the form
     if (Object.keys(errors.value).length === 0 && !isLoading.value) {
       toggleDialog(action.name, false);
-      emit('action-completed', action.name); // Emitting the event
+      emit("action-completed", action.name); // Emitting the event
     }
   }
 };
