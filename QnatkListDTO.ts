@@ -1,9 +1,3 @@
-// export interface QnatkListDTO {
-//   modelOptions: ModelOptions;
-//   pagination: Pagination;
-//   customOptions?: Record<string, unknown>; // You can add any additional custom options here
-// }
-
 import { PropType } from 'vue';
 
 export interface ScopeOption {
@@ -11,28 +5,61 @@ export interface ScopeOption {
   params: unknown[];
 }
 
+export interface FunctionAttribute {
+  fn: string;
+  args?:
+    | (
+        | ColumnReference
+        | FunctionAttribute
+        | LiteralAttribute
+        | string
+        | number
+      )[]
+    | ColumnReference
+    | FunctionAttribute
+    | LiteralAttribute
+    | string
+    | number;
+  as?: string;
+}
+
+export interface ColumnReference {
+  col: string;
+}
+
+export interface LiteralAttribute {
+  literal: string;
+}
+
+export type Attribute =
+  | string
+  | FunctionAttribute
+  | ColumnReference
+  | LiteralAttribute;
+
 export interface ModelOptions {
-  attributes?: (string | Record<string, unknown>)[]; // You can specify attributes as an array or an object
-  include?: (ModelInclude | Record<string, unknown>)[]; // Include can be an array of Include objects or an object
-  where?: Record<string, unknown>; // Define conditions here
-  order?: string | string[]; // Define sorting order here
+  attributes?: Attribute[];
+  include?: (ModelInclude | Record<string, unknown>)[];
+  where?: ModelWhere;
+  order?: string | string[] | [string, 'ASC' | 'DESC'][];
   limit?: number;
   offset?: number;
   subQuery?: boolean;
   scope?: false | string | ScopeOption | (string | ScopeOption)[];
+  group?: string[];
 }
 
-interface ModelInclude {
+export interface ModelInclude {
   model: string;
-  attributes?: (string | Record<string, unknown>)[];
-  where?: Record<string, unknown>;
+  attributes?: Attribute[];
+  where?: ModelWhere;
   required?: boolean;
   duplicating?: boolean;
+  include?: ModelInclude[];
 }
 
 export interface ModelWhere {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any; // The 'any' type can be replaced with a more specific type or union of types as needed
+  [key: string]: any;
   $and?: ModelWhere | ModelWhere[];
   $or?: ModelWhere | ModelWhere[];
   $like?: string;
@@ -50,10 +77,18 @@ export interface ModelWhere {
   $between?: [number, number];
   $notBetween?: [number, number];
   $overlap?: [number, number];
-  // Add other operators as needed
+  $fullText?:
+    | {
+        table: string;
+        fields: string[];
+        query: string;
+      }
+    | {
+        table: string;
+        fields: string[];
+        query: string;
+      }[];
 }
-
-// You may also want to define a specific type for the value of $like, $gt, etc., if you want to restrict it to certain types.
 
 export interface PaginationOption {
   page: number;
@@ -82,7 +117,7 @@ export const autoCompletePropTypes = {
     type: String,
     required: true,
   },
-  attributes: Array as PropType<string[]>,
+  attributes: Array as PropType<Attribute[]>,
   include: {
     type: [Array, Function] as PropType<
       ModelInclude[] | ((val: string) => ModelInclude[])
@@ -92,13 +127,13 @@ export const autoCompletePropTypes = {
     type: [Function, undefined, Boolean] as PropType<
       ((val: string) => ModelWhere) | false | undefined
     >,
-    default: undefined, // Setting default as undefined
+    default: undefined,
   },
   whereOnInitialFetch: {
     type: [Function, undefined, Boolean] as PropType<
       ((val: string) => ModelWhere) | false | undefined
     >,
-    default: undefined, // Setting default as undefined
+    default: undefined,
   },
   limit: Number,
   subQuery: Boolean,
