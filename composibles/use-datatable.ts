@@ -29,7 +29,7 @@ export function useDatatable<T>(
   transformSortBy: (sortBy: string) => string | TransformedSortOption = (
     sortBy
   ) => sortBy,
-  dpp = 1000
+  dpp = -1
 ) {
   // Default to no transformation)
   const data = ref<T[]>([]);
@@ -204,26 +204,28 @@ export function useDatatable<T>(
     }
 
     try {
-      const limit = dpp;
       let offset = 0;
       let hasMoreData = true;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const dataArray: Record<string, any>[] = [];
       console.log('starting fetch iterator :');
       while (hasMoreData) {
-        console.log('fetching offset,limit :', offset, limit);
-        const response = await api.post(`${baseUrl}/${baseModel.value}/list`, {
-          ...effectiveModelOptions,
-          limit: limit,
-          offset: offset,
-        });
-        offset += limit;
-        if (response.data && response.data.length) {
+        console.log('fetching offset,dpp :', offset, dpp);
+        if (dpp > 0) {
+          effectiveModelOptions.limit = dpp;
+          effectiveModelOptions.offset = offset;
+        }
+        const response = await api.post(
+          `${baseUrl}/${baseModel.value}/list`,
+          effectiveModelOptions
+        );
+        if (dpp > 0) {
+          offset += dpp;
+        }
+        if (response.data.length) {
           dataArray.push(...response.data);
-          if (response.data.length < limit) {
-            hasMoreData = false;
-          }
-        } else {
+        }
+        if (dpp < 0 || response.data.length < dpp) {
           hasMoreData = false;
         }
       }
