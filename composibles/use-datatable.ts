@@ -28,7 +28,8 @@ export function useDatatable<T>(
   baseUrl = 'qnatk',
   transformSortBy: (sortBy: string) => string | TransformedSortOption = (
     sortBy
-  ) => sortBy
+  ) => sortBy,
+  dpp = -1
 ) {
   // Default to no transformation)
   const data = ref<T[]>([]);
@@ -203,13 +204,34 @@ export function useDatatable<T>(
     }
 
     try {
-      const response = await api.post(
-        `${baseUrl}/${baseModel.value}/list`,
-        effectiveModelOptions
-      );
+      let offset = 0;
+      let hasMoreData = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const dataArray: Record<string, any>[] = [];
+      console.log('starting fetch iterator :');
+      while (hasMoreData) {
+        console.log('fetching offset,dpp :', offset, dpp);
+        if (dpp > 0) {
+          effectiveModelOptions.limit = dpp;
+          effectiveModelOptions.offset = offset;
+        }
+        const response = await api.post(
+          `${baseUrl}/${baseModel.value}/list`,
+          effectiveModelOptions
+        );
+        if (dpp > 0) {
+          offset += dpp;
+        }
+        if (response.data.length) {
+          dataArray.push(...response.data);
+        }
+        if (dpp < 0 || response.data.length < dpp) {
+          hasMoreData = false;
+        }
+      }
 
       const data = processRows(
-        response.data,
+        dataArray,
         undefined,
         undefined,
         callBacks.downloadRowIterator || defaultDownloadRowIterator
