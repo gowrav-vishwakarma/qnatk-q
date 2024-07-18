@@ -2,6 +2,12 @@
 import { AxiosInstance } from 'axios';
 import { Component } from 'vue';
 
+interface HtmlContentItem {
+  tag: string;
+  attrs?: Record<string, string>;
+  content?: string;
+}
+
 export interface FormField {
   fieldId: string;
   dataField: string;
@@ -12,6 +18,7 @@ export interface FormField {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   showCondition?: (values: Record<string, any>) => boolean; // Optional visibility condition
   children?: FormField[];
+  htmlContent?: HtmlContentItem[];
 }
 
 interface FormCallback {

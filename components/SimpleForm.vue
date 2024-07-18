@@ -42,7 +42,18 @@
                             : ''
                         "
                         :rules="getRules(childField)"
-                      />
+                      >
+                        <template v-if="field.htmlContent">
+                          <component
+                            v-for="(item, index) in field.htmlContent"
+                            :key="index"
+                            :is="item.tag"
+                            v-bind="item.attrs"
+                          >
+                            {{ item.content }}
+                          </component>
+                        </template>
+                      </component>
                     </div>
                   </template>
                 </component>
