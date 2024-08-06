@@ -121,6 +121,11 @@ export function useDatatable<T>(
       ...options,
     };
 
+    if (effectiveModelOptions.limit === 0) {
+      delete effectiveModelOptions.limit;
+      delete effectiveModelOptions.offset;
+    }
+
     // Apply the transformation to the sortBy, if present
     if (pagination.value.sortBy) {
       effectiveModelOptions.sortBy = transformSortBy(pagination.value.sortBy);

@@ -15,7 +15,10 @@
           <template v-for="field in reactiveFormFields" :key="field.fieldId">
             <div :class="`${field.colClass}`" v-if="field.isVisible">
               <template v-if="field.children">
-                <component :is="field.component" v-bind="field.props">
+                <component
+                  :is="field.component"
+                  v-bind="{ ...field.props, ...getDynamicProps(field) }"
+                >
                   <template
                     v-for="childField in field.children"
                     :key="childField.fieldId"
@@ -33,7 +36,10 @@
                       </span>
                       <component
                         :is="childField.component"
-                        v-bind="childField.props"
+                        v-bind="{
+                          ...childField.props,
+                          ...getDynamicProps(childField),
+                        }"
                         v-model="values[childField.fieldId]"
                         :error="!!errors[childField.fieldId]"
                         :error-message="
@@ -64,7 +70,7 @@
                 </span>
                 <component
                   :is="field.component"
-                  v-bind="field.props"
+                  v-bind="{ ...field.props, ...getDynamicProps(field) }"
                   v-model="values[field.fieldId]"
                   :error="!!errors[field.fieldId]"
                   :error-message="
@@ -101,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import { FormConfig } from '../form-builder-interface';
+import { FormConfig, FormField } from '../form-builder-interface';
 import { useForm } from '../composibles/use-form';
 import { computed, reactive, toRefs } from 'vue';
 
@@ -180,6 +186,16 @@ const { values, validateAndSubmit, callbacks, errors, isLoading } = useForm(
   submitUrl.value,
   defaultValues
 );
+
+const getDynamicProps = (field: FormField) => {
+  if (!field.dynamicProps) return {};
+
+  const dynamicProps: Record<string, string> = {};
+  for (const [propName, fieldId] of Object.entries(field.dynamicProps)) {
+    dynamicProps[propName] = values.value[fieldId];
+  }
+  return dynamicProps;
+};
 
 const getRules = (field) => {
   if (typeof field.props.rules === 'function') {

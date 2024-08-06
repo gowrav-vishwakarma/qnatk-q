@@ -19,6 +19,9 @@ export interface FormField {
   showCondition?: (values: Record<string, any>) => boolean; // Optional visibility condition
   children?: FormField[];
   htmlContent?: HtmlContentItem[];
+  dynamicProps?: {
+    [key: string]: string; // Key is the prop name, value is the fieldId to get the value from
+  };
 }
 
 interface FormCallback {
