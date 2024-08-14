@@ -26,6 +26,7 @@ export function useForm<ResponseFormat extends Record<string, any>>(
   );
 
   const url = ref(initialUrl);
+  const apiInstance = ref(api);
 
   // Define the callback functions in a reactive object
   const callbacks = reactive({
@@ -97,6 +98,10 @@ export function useForm<ResponseFormat extends Record<string, any>>(
     url.value = newUrl;
   };
 
+  const updateApiInstance = (newApi: AxiosInstance) => {
+    apiInstance.value = newApi;
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isFile = (value: any): value is File => {
     return value instanceof File;
@@ -164,7 +169,11 @@ export function useForm<ResponseFormat extends Record<string, any>>(
     };
 
     try {
-      const response = await api[METHOD](url.value, payload, config);
+      const response = await apiInstance.value[METHOD](
+        url.value,
+        payload,
+        config
+      );
       responseData.value = response.data;
       if (resetForm) values.value = { ...defaultValues };
       await callbacks.onSuccess(response.data);
@@ -185,6 +194,7 @@ export function useForm<ResponseFormat extends Record<string, any>>(
     errors,
     isLoading,
     updateUrl,
+    updateApiInstance,
     validateAndSubmit,
     validateResponse,
     responseData,
