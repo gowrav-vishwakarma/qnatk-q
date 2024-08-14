@@ -1,0 +1,4131 @@
+Here are files of my custom Fromework for Vue3 and Quasar 2.
+
+===
+src/components/qnatk/
+  File: ActionDTO.ts
+  Content:
+
+  import {
+    IsString,
+    IsNotEmpty,
+    ValidateNested,
+    IsObject,
+    IsArray,
+    IsOptional,
+    Validate,
+    ValidationArguments,
+    ValidatorConstraint,
+    ValidatorConstraintInterface,
+    registerDecorator,
+    ValidationOptions,
+  } from 'class-validator';
+  import { Type } from 'class-transformer';
+
+  @ValidatorConstraint({ name: 'isStringOrObject', async: false })
+  export class IsStringOrObjectConstraint
+    implements ValidatorConstraintInterface
+  {
+    validate(value: unknown, args: ValidationArguments) {
+      return (
+        typeof value === 'string' || (typeof value === 'object' && value !== null)
+      );
+    }
+
+    defaultMessage(args: ValidationArguments) {
+      return 'icon must be a string or an object';
+    }
+  }
+
+  export function IsStringOrObject(validationOptions?: ValidationOptions) {
+    return function (object: object, propertyName: string) {
+      registerDecorator({
+        name: 'isStringOrObject',
+        target: object.constructor,
+        propertyName: propertyName,
+        options: validationOptions,
+        constraints: [],
+        validator: IsStringOrObjectConstraint,
+      });
+    };
+  }
+
+  class UIOptionsDTO {
+    @IsString()
+    mode!: string;
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => LayoutRow)
+    layout?: LayoutRow[];
+
+    @IsOptional()
+    @IsObject()
+    @ValidateNested()
+    @Type(() => FieldSchema)
+    fields?: Record<string, FieldSchema>;
+
+    @IsNotEmpty()
+    title!: string;
+
+    @IsNotEmpty()
+    message!: string;
+
+    @IsNotEmpty()
+    okLabel!: string;
+
+    @IsNotEmpty()
+    cancelLabel!: string;
+  }
+
+  class FieldSchema {
+    @IsString()
+    type!: string;
+
+    @IsString()
+    label!: string;
+
+    @IsOptional()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    defaultValue: any;
+
+    @IsOptional()
+    @IsArray()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validation!: any[]; // Define validation rules here
+
+    // ... add more field properties if needed
+  }
+
+  class LayoutColumn {
+    @IsString()
+    fieldKey!: string;
+
+    @IsOptional()
+    width?: number;
+
+    @IsOptional()
+    @IsString()
+    class?: string;
+  }
+
+  class LayoutRow {
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => LayoutColumn)
+    columns!: LayoutColumn[];
+  }
+
+  export class ActionDTO {
+    @IsNotEmpty()
+    name!: string;
+
+    @IsOptional()
+    @IsString()
+    baseModel?: string;
+
+    @IsStringOrObject({ message: 'label must be a string or an object' })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    label?: string | Record<string, any>;
+
+    @IsOptional()
+    @IsString()
+    tooltip?: string;
+
+    @IsStringOrObject({ message: 'icon must be a string or an object' })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    icon!: string | Record<string, any>;
+
+    @IsStringOrObject({ message: 'icon color must be a string or an object' })
+    @IsOptional()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    iconColor?: string | Record<string, any>;
+
+    @IsNotEmpty()
+    description!: string;
+
+    @IsNotEmpty()
+    mode!: string;
+
+    @IsObject()
+    @ValidateNested()
+    @Type(() => UIOptionsDTO)
+    ui!: UIOptionsDTO;
+
+    @IsString()
+    @IsOptional()
+    loadBy?:
+      | string
+      | {
+          paramField: string;
+          tableField: string;
+        };
+
+    @IsArray()
+    @IsString({ each: true })
+    roles!: string[];
+
+    @IsOptional()
+    @IsObject()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    condition?: Record<string, any>;
+
+    @IsOptional()
+    @IsObject()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    returnModel: Record<string, any> | boolean = false;
+  }
+
+  export type ActionListDTO = Record<string, ActionDTO>;
+
+  ====
+
+  File: QNATKFilterOptions.ts
+  Content:
+
+  // Define a type for the allowed operator strings
+  type Operator =
+    | '$eq'
+    | '$gt'
+    | '$lt'
+    | '$gte'
+    | '$lte'
+    | '$between'
+    | '$contains'
+    | '$startsWith'
+    | '$endsWith'
+    | '$like';
+
+  interface FilterOption {
+    field: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    component: any; // Replace 'any' with a more specific type if possible
+    type: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    props: Record<string, any>; // Use a more specific type if you know the structure of props
+    operators: Operator[];
+    currentOperator?: Operator;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    defaultValues?: any; // Replace 'any' with a more specific type if possible
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    where?: Record<string, any>; // Use a more specific type if you know the structure of where
+    visible?: boolean;
+    label?: string;
+    includePath?: string;
+    include?: Include;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    bind?: Record<string, any>; // Use a more specific type if you know the structure of bind
+    options?: Array<{ label: string; value: string | number | null }>;
+  }
+
+  interface Include {
+    model: string;
+    as: string;
+    attributes: string[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    where: Record<string, any>; // Use a more specific type if you know the structure of where
+  }
+
+  ====
+
+  File: QnatkListDTO.ts
+  Content:
+
+  import { PropType } from 'vue';
+
+  export interface ScopeOption {
+    name: string;
+    params: unknown[];
+  }
+
+  export interface FunctionAttribute {
+    fn: string;
+    args?:
+      | (
+          | ColumnReference
+          | FunctionAttribute
+          | LiteralAttribute
+          | string
+          | number
+        )[]
+      | ColumnReference
+      | FunctionAttribute
+      | LiteralAttribute
+      | string
+      | number;
+    as?: string;
+  }
+
+  export interface ColumnReference {
+    col: string;
+  }
+
+  export interface LiteralAttribute {
+    literal: string;
+  }
+
+  export type Attribute =
+    | string
+    | FunctionAttribute
+    | ColumnReference
+    | LiteralAttribute;
+
+  export interface ModelOptions {
+    attributes?: Attribute[];
+    include?: (ModelInclude | Record<string, unknown>)[];
+    where?: ModelWhere;
+    order?: string | string[] | [string, 'ASC' | 'DESC'][];
+    limit?: number;
+    offset?: number;
+    subQuery?: boolean;
+    scope?: false | string | ScopeOption | (string | ScopeOption)[];
+    group?: string[];
+  }
+
+  export interface ModelInclude {
+    model: string;
+    attributes?: Attribute[];
+    where?: ModelWhere;
+    required?: boolean;
+    duplicating?: boolean;
+    include?: ModelInclude[];
+  }
+
+  export interface ModelWhere {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+    $and?: ModelWhere | ModelWhere[];
+    $or?: ModelWhere | ModelWhere[];
+    $like?: string;
+    $notLike?: string;
+    $iLike?: string;
+    $notILike?: string;
+    $gt?: number;
+    $gte?: number;
+    $lt?: number;
+    $lte?: number;
+    $ne?: string | number;
+    $eq?: string | number;
+    $in?: Array<string | number>;
+    $notIn?: Array<string | number>;
+    $between?: [number, number];
+    $notBetween?: [number, number];
+    $overlap?: [number, number];
+    $fullText?:
+      | {
+          table: string;
+          fields: string[];
+          query: string;
+        }
+      | {
+          table: string;
+          fields: string[];
+          query: string;
+        }[];
+  }
+
+  export interface PaginationOption {
+    page: number;
+    rowsPerPage: number;
+    sortBy: string;
+    descending: boolean;
+    rowsNumber: number;
+  }
+
+  export type TransformedSortOption = [
+    {
+      model: string;
+      as: string;
+    },
+    string
+  ];
+
+  export const autoCompletePropTypes = {
+    modelValue: [Number, Object, null] as PropType<
+      number | Record<string, unknown> | null
+    >,
+    label: {
+      type: String,
+    },
+    baseModel: {
+      type: String,
+      required: true,
+    },
+    attributes: Array as PropType<Attribute[]>,
+    include: {
+      type: [Array, Function] as PropType<
+        ModelInclude[] | ((val: string) => ModelInclude[])
+      >,
+    },
+    where: {
+      type: [Function, undefined, Boolean] as PropType<
+        ((val: string) => ModelWhere) | false | undefined
+      >,
+      default: undefined,
+    },
+    whereOnInitialFetch: {
+      type: [Function, undefined, Boolean] as PropType<
+        ((val: string) => ModelWhere) | false | undefined
+      >,
+      default: undefined,
+    },
+    limit: Number,
+    subQuery: Boolean,
+    getModelOptionsFn: Function as PropType<(val: string) => ModelOptions>,
+    getFetchInitialValueOptionsFn: Function as PropType<
+      (id: string) => ModelOptions
+    >,
+    valueFieldName: {
+      type: String,
+      default: 'id',
+    },
+    labelFieldName: {
+      type: String,
+      default: 'name',
+    },
+    error: Boolean,
+    errorMessage: String,
+    placeholder: String,
+  };
+
+  export interface SelectOption {
+    id: number;
+    name: string;
+    [key: string]: unknown;
+  }
+
+  export interface AutocompleteFunction<T> {
+    (val: string): T;
+  }
+
+  ====
+
+  src/components/qnatk/components/
+    File: components/AutoSelect.vue
+    Content:
+
+    <template>
+      <q-select
+        :model-value="selected"
+        :options="suggestions"
+        :loading="isLoading"
+        :error="error"
+        :error-message="errorMessage"
+        use-input
+        clearable
+        @filter="filterFn"
+        @update:model-value="updateSelected"
+        :label="label"
+        v-bind="$attrs"
+      >
+        <!-- Providing slots from the parent component -->
+        <template
+          v-for="(slotName, index) in Object.keys($slots)"
+          :key="index"
+          #[slotName]="slotProps"
+        >
+          <slot :name="slotName" v-bind="slotProps"></slot>
+        </template>
+      </q-select>
+    </template>
+
+    <script lang="ts" setup>
+    import { watch } from 'vue';
+    import { useAutocomplete } from '../composibles/use-autocomplete';
+    import { autoCompletePropTypes, ModelOptions } from '../QnatkListDTO';
+
+    const props = defineProps({
+      ...autoCompletePropTypes,
+      api: {
+        type: Function,
+        required: true,
+      },
+      qnatkUrl: {
+        type: String,
+        default: '/qnatk',
+      },
+    });
+
+    const defaultGetModelOptionsFn = (val: string): ModelOptions => {
+      const modelOptions: ModelOptions = {
+        attributes: props.attributes || [
+          props.valueFieldName,
+          props.labelFieldName,
+        ],
+        include:
+          typeof props.include === 'function'
+            ? props.include(val)
+            : props.include || [],
+        limit: props.limit || 10,
+        subQuery: props.subQuery || false,
+      };
+      // if (props.where === undefined) {
+      //   modelOptions.where = { [props.labelFieldName]: { $like: `%${val}%` } };
+      // } else
+      if (props.where !== false && typeof props.where === 'function') {
+        modelOptions.where = props.where(val);
+      }
+
+      console.log('modelOptions', modelOptions, 'props', props);
+      return modelOptions;
+    };
+
+    const defaultGetFetchInitialValueOptionsFn = (id: string): ModelOptions => {
+      const modelOptions: ModelOptions = {
+        attributes: props.attributes || [
+          props.valueFieldName,
+          props.labelFieldName,
+        ],
+        include:
+          typeof props.include === 'function'
+            ? props.include(id)
+            : props.include || [],
+      };
+
+      if (props.subQuery) modelOptions.subQuery = props.subQuery;
+
+      if (props.whereOnInitialFetch !== false) {
+        modelOptions.where = props.whereOnInitialFetch
+          ? props.whereOnInitialFetch(id)
+          : { [props.valueFieldName]: { $eq: id } };
+      }
+
+      return modelOptions;
+    };
+    const emits = defineEmits(['update:modelValue']);
+    if (!props.baseModel) throw new Error('baseModel is required');
+
+    // Set up autocomplete using props
+    const { suggestions, isLoading, filterFn, selected, fetchInitialValue } =
+      useAutocomplete(
+        props.api(),
+        props.baseModel,
+        props.getModelOptionsFn || defaultGetModelOptionsFn,
+        props.getFetchInitialValueOptionsFn || defaultGetFetchInitialValueOptionsFn,
+        props.valueFieldName,
+        props.labelFieldName,
+        props.qnatkUrl
+      );
+
+    // Function to emit the selected value
+    const updateSelected = (newValue: { label: string; value: number } | null) => {
+      selected.value = newValue;
+      emits('update:modelValue', newValue);
+    };
+
+    // Initial fetch and watch for external changes
+    watch(
+      () => props.modelValue,
+      async (newVal) => {
+        console.log('newVal', newVal);
+        if (typeof newVal === 'number' && newVal !== selected.value?.value) {
+          await fetchInitialValue(newVal);
+        } else if (newVal === null) {
+          selected.value = null;
+        }
+      },
+      { immediate: true } // Run immediately on component mount
+    );
+    </script>
+
+    ====
+
+    File: components/FilterMenu.vue
+    Content:
+
+    <template>
+      <div class="row inline q-col-gutter-x-sm">
+        <span
+          v-for="component in visibleComponents"
+          :key="component.field"
+          class="flex bg-grey-3 q-mr-sm"
+        >
+          <component
+            dense
+            :is="getComponentByField(component.field)"
+            :error="undefined"
+            class="flex"
+            v-model="localValues[component.field]"
+            :map-options="component.bind?.['map-options']"
+            :emit-value="component.bind?.['emit-value']"
+            :range="
+              componentCurrentOperators[component.field] === '$between' &&
+              component.type === 'date'
+            "
+            v-bind="component.props"
+            @keydown.prevent.enter="executeFilter"
+          />
+          <q-select
+            v-if="component.operators && component.operators.length > 1"
+            dense
+            v-model="componentCurrentOperators[component.field]"
+            :options="component.operators.map((op) => ({ label: op, value: op }))"
+            class="q-mr-sm"
+            emit-value
+            @update:model-value="operatorChanged(component.field, $event)"
+          />
+        </span>
+        <q-btn-dropdown
+          flat
+          dense
+          split
+          label="Filter"
+          @click="executeFilter"
+          size="md"
+          color="primary"
+          icon="filter_list"
+        >
+          <q-list>
+            <q-item
+              clickable
+              v-for="component in localFilterOptions"
+              :key="component.field"
+              @click="toggleFilterVisibility(component.field)"
+            >
+              <q-item-section side
+                ><q-icon name="check" :color="component.visible ? 'red' : 'grey'"
+              /></q-item-section>
+              <q-item-section>
+                <q-item-label>{{ component.props?.label }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
+      </div>
+    </template>
+    <script setup lang="ts">
+    import { computed, PropType, reactive, watch, onMounted } from 'vue';
+
+    const props = defineProps({
+      filterOptions: {
+        type: Array as PropType<FilterOption[]>,
+        required: true,
+      },
+
+      fetchOptions: {
+        type: Object,
+        required: true,
+      },
+
+      fetchDataFunction: {
+        type: Function,
+        required: true,
+      },
+    });
+
+    const emits = defineEmits([
+      'update:fetchOptions',
+      'update:filterOptions',
+      'update:fetchDataFunction',
+    ]);
+
+    const localFilterOptions: FilterOption[] = reactive<FilterOption[]>([
+      ...props.filterOptions.map((opt) => {
+        const { component, ...rest } = opt;
+        return { ...rest, component: '' };
+      }),
+    ]);
+
+    const getComponentByField = (field: string) => {
+      const filterOption = props.filterOptions.find((opt) => opt.field === field);
+      if (!filterOption) throw new Error('Invalid field');
+      return filterOption.component;
+    };
+
+    const toggleFilterVisibility = (componentField: string) => {
+      const component = localFilterOptions.find(
+        (opt) => opt.field === componentField
+      );
+      if (component) {
+        // Toggle the visibility
+        component.visible = !component.visible;
+
+        if (component.visible) {
+          // If the component is now visible, update or add entries
+          componentCurrentOperators[componentField] =
+            component.currentOperator || component.operators[0];
+          if (!(componentField in localValues)) {
+            localValues[componentField] = component.defaultValues || '';
+          }
+        } else {
+          // If the component is now not visible, remove its entries
+          if (componentField in componentCurrentOperators) {
+            delete componentCurrentOperators[componentField];
+          }
+          if (componentField in localValues) {
+            delete localValues[componentField];
+          }
+        }
+      }
+    };
+
+    const componentCurrentOperators = reactive<Record<string, Operator>>({});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const localValues = reactive<Record<string, any>>({});
+
+    const visibleComponents = computed(() => {
+      return localFilterOptions.filter((option) => option.visible);
+    });
+
+    watch(
+      localFilterOptions,
+      (newOptions) => {
+        newOptions.forEach((component) => {
+          // Update componentCurrentOperators
+          if (component.field in componentCurrentOperators) {
+            // If it already exists, update it only if the currentOperator has changed
+            if (
+              component.currentOperator &&
+              componentCurrentOperators[component.field] !==
+                component.currentOperator
+            ) {
+              componentCurrentOperators[component.field] =
+                component.currentOperator;
+            }
+          } else {
+            // If it does not exist, add it
+            componentCurrentOperators[component.field] =
+              component.currentOperator || component.operators[0];
+          }
+
+          // Update localValues
+          if (!(component.field in localValues)) {
+            localValues[component.field] = component.defaultValues || '';
+          }
+        });
+      },
+      { deep: true }
+    );
+
+    const operatorChanged = (field: string, operator: Operator) => {
+      componentCurrentOperators[field] = operator;
+      if (operator === '$between') {
+        localValues[field] = { from: localValues[field], to: localValues[field] };
+      }
+    };
+
+    // Storing the initial state of fetchOptions
+    const initialFetchOptions = JSON.parse(JSON.stringify(props.fetchOptions));
+    const originalFilterOptions = JSON.parse(JSON.stringify(localFilterOptions));
+
+    // Helper function to build condition based on operator
+    const buildCondition = (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      conditionTemplate: any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      value: any,
+      operator: Operator
+    ) => {
+      let condition = JSON.parse(JSON.stringify(conditionTemplate));
+
+      switch (operator) {
+        case '$contains':
+          replaceCondition(condition, '$like', `%${value}%`);
+          break;
+        case '$startsWith':
+          replaceCondition(condition, '$like', `${value}%`);
+          break;
+        case '$endsWith':
+          replaceCondition(condition, '$like', `%${value}`);
+          break;
+        case '$between':
+          replaceCondition(condition, '$between', value); // Assuming value is an array for between
+          break;
+        default:
+          replaceCondition(condition, operator, value);
+          break;
+      }
+
+      return condition;
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const replaceCondition = (condition: any, operator: Operator, value: any) => {
+      if (Array.isArray(condition)) {
+        condition.forEach((subCondition) =>
+          replaceCondition(subCondition, operator, value)
+        );
+      } else if (typeof condition === 'object' && condition !== null) {
+        for (const key in condition) {
+          if (condition[key]['$$op$$']) {
+            condition[key] = { [operator]: value };
+          } else {
+            replaceCondition(condition[key], operator, value);
+          }
+        }
+      }
+    };
+
+    const handleIncludes = (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mergeInInclude: any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      newIncludeObject: any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      fieldValue: any,
+      currentOperator: Operator
+    ) => {
+      if (!mergeInInclude.include) mergeInInclude.include = [];
+
+      let existingInclude = mergeInInclude.include.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (include: any) => include.as === newIncludeObject.as
+      );
+
+      if (!existingInclude) {
+        newIncludeObject.where = buildCondition(
+          newIncludeObject.where,
+          fieldValue,
+          currentOperator
+        );
+        mergeInInclude.include.push(newIncludeObject);
+      } else {
+        if (newIncludeObject.where && !existingInclude.where)
+          existingInclude.where = {};
+        existingInclude.where = {
+          ...existingInclude.where,
+          ...buildCondition(newIncludeObject.where, fieldValue, currentOperator),
+        };
+      }
+
+      // if (newIncludeObject.include) {
+      //   handleIncludes(
+      //     newIncludeObject,
+      //     newIncludeObject.include,
+      //     fieldValue,
+      //     currentOperator
+      //   );
+      // }
+    };
+
+    // Main function to execute filter
+    const executeFilter = () => {
+      console.log('executeFilter');
+      let updatedFetchOptions = JSON.parse(JSON.stringify(initialFetchOptions));
+      const filterOptions = JSON.parse(JSON.stringify(localFilterOptions));
+
+      filterOptions
+        // .filter((opt: FilterOption) => !opt.visible)
+        .forEach((filterOption: FilterOption) => {
+          if (filterOption.visible) {
+            let fieldValue = localValues[filterOption.field];
+            const currentOperator = componentCurrentOperators[filterOption.field];
+
+            if (
+              typeof fieldValue === 'object' &&
+              fieldValue !== null &&
+              fieldValue.value !== undefined
+            ) {
+              fieldValue = fieldValue.value;
+            }
+
+            if (
+              typeof fieldValue === 'object' &&
+              fieldValue !== null &&
+              fieldValue.from
+            ) {
+              fieldValue = [fieldValue.from, fieldValue.to + ' 23:59:59'];
+            }
+
+            if (
+              fieldValue !== undefined &&
+              fieldValue !== null &&
+              fieldValue !== ''
+            ) {
+              if (filterOption.where) {
+                filterOption.where = buildCondition(
+                  filterOption.where,
+                  fieldValue,
+                  currentOperator
+                );
+                if (!updatedFetchOptions.where) updatedFetchOptions.where = {};
+                updatedFetchOptions.where = {
+                  ...updatedFetchOptions.where,
+                  ...filterOption.where,
+                };
+              }
+
+              if (filterOption.include) {
+                handleIncludes(
+                  updatedFetchOptions,
+                  filterOption.include,
+                  fieldValue,
+                  currentOperator
+                );
+              }
+            }
+          }
+        });
+
+      emits('update:fetchOptions', updatedFetchOptions);
+      props.fetchDataFunction();
+      return updatedFetchOptions;
+    };
+
+    onMounted(() => {
+      localFilterOptions.forEach((component) => {
+        if (component.visible) {
+          componentCurrentOperators[component.field] =
+            component.currentOperator || component.operators[0];
+          localValues[component.field] = component.defaultValues || '';
+        }
+      });
+    });
+    </script>
+
+    <style scoped></style>
+
+    ====
+
+    File: components/MultiRecordActions.vue
+    Content:
+
+    <template>
+      <q-btn-group>
+        <template v-for="action in multiRecordActions" :key="action.name">
+          <q-btn
+            v-if="
+              actionUnavailableBehavior === 'hide'
+                ? checkCondition(action, props.records)
+                : true
+            "
+            :disabled="
+              actionUnavailableBehavior === 'disable' &&
+              !checkCondition(action, props.records)
+            "
+            flat
+            :icon="action.icon"
+            :label="action.label"
+            :color="
+              actionUnavailableBehavior === 'disable' &&
+              !checkCondition(action, props.records)
+                ? 'grey'
+                : action.iconColor ?? 'primary'
+            "
+            @click="() => handleActionClick(action)"
+          >
+            <q-dialog v-model="dialogStates[action.name]" full-width>
+              <template v-if="isLoading">
+                <q-spinner />
+              </template>
+              <template v-else>
+                <slot
+                  :name="action.name"
+                  :action="action"
+                  :record="props.record"
+                  :closeDialog="() => toggleDialog(action.name, false)"
+                  :confirmAction="() => handleConfirmation(action)"
+                >
+                  <!-- Check if the action UI is of type confirmation -->
+                  <template v-if="action.ui && action.ui.mode === 'confirmation'">
+                    <q-card>
+                      <q-card-section>
+                        <div class="text-h6">{{ action.ui.title }}</div>
+                        <div>{{ action.ui.message }}</div>
+                      </q-card-section>
+                      <q-card-actions align="right">
+                        <q-btn
+                          flat
+                          label="Cancel"
+                          color="primary"
+                          @click="toggleDialog(action.name, false)"
+                        />
+                        <q-btn
+                          flat
+                          label="Confirm"
+                          color="primary"
+                          @click="() => handleConfirmation(action)"
+                        />
+                      </q-card-actions>
+                    </q-card>
+                  </template>
+                  <template v-else>
+                    <q-card>
+                      <q-card-section>
+                        <div class="text-h6">{{ action.ui.title }}</div>
+                        <div>{{ action.ui.message }}</div>
+                      </q-card-section>
+                      <q-card-section>
+                        <q-banner icon="warning" class="bg-red-5" dark>
+                          <div class="text-h6">NOT IMPLEMENTED</div>
+                          <div>
+                            This action is not implemented yet. Please create a
+                            template in parent component with
+                            <b>'#{{ action.name }}'</b>
+                            slot.
+                          </div>
+                        </q-banner>
+                        <code>
+                          &lt;template #{{ action.name }}="{ action, closeDialog
+                          }"&gt; &lt;your-component :action="action"
+                          :record="props.row" :close-dialog="closeDialog"
+                          @action-completed="fetchData" &gt;&lt;/your-component$lt;
+                          &lt;/template&gt;
+                        </code>
+                      </q-card-section>
+                      <q-card-actions align="right">
+                        <q-btn
+                          flat
+                          label="Cancel"
+                          color="primary"
+                          @click="toggleDialog(action.name, false)"
+                        />
+                        <q-btn
+                          flat
+                          label="NOT IMPLEMENTED"
+                          color="red"
+                          @click="toggleDialog(action.name, false)"
+                        />
+                      </q-card-actions>
+                    </q-card>
+                  </template>
+                </slot>
+              </template>
+              <template v-slot:confirm-action="{ action }">
+                <!-- Scoped slot for overriding confirm action -->
+                <slot
+                  :name="'confirm-' + action.name"
+                  :action="action"
+                  :closeDialog="() => toggleDialog(action.name, false)"
+                />
+              </template>
+              <template v-for="(errorMessages, field) in errors" :key="field">
+                <div
+                  v-for="message in errorMessages"
+                  :key="message"
+                  class="text-negative"
+                >
+                  {{ message }}
+                </div>
+              </template>
+            </q-dialog>
+          </q-btn>
+        </template>
+      </q-btn-group>
+    </template>
+
+    <script setup lang="ts">
+    import { computed, reactive, toRefs } from 'vue';
+    import { useForm } from '../composibles/use-form';
+    import { ActionListDTO } from '../ActionDTO';
+
+    interface DialogStates {
+      [key: string]: boolean;
+    }
+
+    interface ActionStructure {
+      [key: string]: boolean;
+    }
+
+    const props = defineProps({
+      baseModel: {
+        type: String,
+        required: true,
+      },
+      actions: {
+        type: Object as () => ActionListDTO,
+        required: true,
+      },
+      records: {
+        type: Object,
+        required: true,
+      },
+      api: {
+        type: Function,
+        required: true,
+      },
+      customActions: {
+        type: Object, // Object mapping action names to functions
+        default: () => ({}),
+      },
+      customConfirmations: {
+        type: Object, // Object mapping action names to functions
+        default: () => ({}),
+      },
+      actionUnavailableBehavior: {
+        type: String,
+        default: 'disable', // or 'hide'
+      },
+      qnatkUrl: {
+        type: String,
+        default: '/qnatk',
+      },
+    });
+
+    const emit = defineEmits(['action-completed']);
+
+    const { customActions, customConfirmations } = toRefs(props);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const checkCondition = (action: ActionStructure, selectedRecords: any[]) => {
+      if (selectedRecords.length === 0) {
+        return false; // If no records are selected, the action is not available
+      }
+
+      if (!action.condition) {
+        return true; // If no condition is specified, the action is always available
+      }
+
+      return selectedRecords.every((record) => {
+        return Object.entries(action.condition).every(([key, value]) => {
+          if (Array.isArray(value))
+            return value.includes(record[key]); // 'OR' condition (array value)
+          else {
+            return record[key] === value;
+          }
+        });
+      });
+    };
+
+    const multiRecordActions = computed(() => {
+      return Object.keys(props.actions)
+        .filter((key) => props.actions[key].mode === 'MultiRecord')
+        .map((key) => props.actions[key]);
+    });
+
+    // State to track dialog open/close for each action
+    const dialogStates = reactive(
+      multiRecordActions.value.reduce((acc: DialogStates, action) => {
+        acc[action.name] = false;
+        return acc;
+      }, {})
+    );
+
+    const handleActionClick = (action) => {
+      // Check if there's custom confirmation logic defined for this action
+      if (customActions.value[action.name]) {
+        // Execute the custom confirmation logic directly
+        customActions.value[action.name](action, props.record, () =>
+          toggleDialog(action.name, false)
+        );
+      } else {
+        // No custom confirmation logic, toggle the dialog for default handling
+        toggleDialog(action.name);
+      }
+    };
+
+    const toggleDialog = (actionName, open = true) => {
+      dialogStates[actionName] = open;
+    };
+
+    const onSuccess = (data) => {
+      isLoading.value = false; // Reset loading state
+      errors.value = {}; // Reset errors
+      console.log('Success:', data);
+      // Handle success (e.g., show success message, refresh data)
+    };
+
+    const onError = (error) => {
+      isLoading.value = false; // Reset loading state
+      console.log('Error:', error);
+      // Handle error (e.g., show error message)
+    };
+
+    // Outside the handleConfirmation method
+    const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
+      useForm(
+        props.api(),
+        `/${props.qnatkUrl}/${props.baseModel}/execute-action-multi-record`,
+        {} // Initialize with empty object or default values
+      );
+
+    // Inside SingleRecordActions setup
+    const handleConfirmation = async (action) => {
+      updateUrl(
+        `/${props.qnatkUrl}/${props.baseModel}/bulkActionExecute/${action.name}`
+      );
+      // Prepare the form data
+      values.value = { action: action, records: props.records }; // Update form data
+
+      if (customConfirmations.value[action.name]) {
+        // Custom confirmation logic
+        customConfirmations.value[action.name](action, props.records, () =>
+          toggleDialog(action.name, false)
+        );
+      } else {
+        callbacks.onSuccess = (data) => {
+          isLoading.value = false; // Reset loading state
+          errors.value = {}; // Reset errors
+          emit('action-completed', { action, modelInstance: data.modelInstance }); // Emitting the event
+          // Handle success (e.g., show success message, refresh data)
+        };
+        // Default confirmation logic
+        console.log('Confirmed action:', action.name);
+        await validateAndSubmit(); // Submit the form
+        if (Object.keys(errors.value).length === 0 && !isLoading.value) {
+          toggleDialog(action.name, false);
+          emit('action-completed', action.name); // Emitting the event
+        }
+      }
+    };
+    </script>
+
+    ====
+
+    File: components/NoRecordActions.vue
+    Content:
+
+    <template>
+      <q-btn-group>
+        <slot name="beforeActions" />
+        <template v-for="action in noRecordActions" :key="action.name">
+          <q-btn
+            flat
+            :icon="action.icon"
+            :label="action.label"
+            :color="action.iconColor ?? 'primary'"
+            @click="() => handleActionClick(action)"
+          >
+            <q-dialog v-model="dialogStates[action.name]" full-width>
+              <template v-if="isLoading">
+                <q-spinner />
+              </template>
+              <template v-else>
+                <slot
+                  :name="action.name"
+                  :action="action"
+                  :closeDialog="() => toggleDialog(action.name, false)"
+                  :confirmAction="() => handleConfirmation(action)"
+                >
+                  <!-- Check if the action UI is of type confirmation -->
+                  <template v-if="action.ui && action.ui.mode === 'confirmation'">
+                    <q-card>
+                      <q-card-section>
+                        <div class="text-h6">{{ action.ui.title }}</div>
+                        <div>{{ action.ui.message }}</div>
+                      </q-card-section>
+                      <q-card-actions align="right">
+                        <q-btn
+                          flat
+                          label="Cancel"
+                          color="primary"
+                          @click="toggleDialog(action.name, false)"
+                        />
+                        <q-btn
+                          flat
+                          label="Confirm"
+                          color="primary"
+                          @click="() => handleConfirmation(action)"
+                        />
+                      </q-card-actions>
+                    </q-card>
+                  </template>
+                  <template v-else>
+                    <q-card>
+                      <q-card-section>
+                        <div class="text-h6">{{ action.ui.title }}</div>
+                        <div>{{ action.ui.message }}</div>
+                      </q-card-section>
+                      <q-card-section>
+                        <q-banner icon="warning" class="bg-red-5" dark>
+                          <div class="text-h6">NOT IMPLEMENTED</div>
+                          <div>
+                            This action is not implemented yet. Please create a
+                            template in parent component with
+                            <b>'#{{ action.name }}'</b>
+                            slot.
+                          </div>
+                        </q-banner>
+                        <code>
+                          &lt;template #{{ action.name }}="{ action, closeDialog
+                          }"&gt; &lt;your-component :action="action"
+                          :record="props.row" :close-dialog="closeDialog"
+                          @action-completed="fetchData" &gt;&lt;/your-component$lt;
+                          &lt;/template&gt;
+                        </code>
+                      </q-card-section>
+                      <q-card-actions align="right">
+                        <q-btn
+                          flat
+                          label="Cancel"
+                          color="primary"
+                          @click="toggleDialog(action.name, false)"
+                        />
+                        <q-btn
+                          flat
+                          label="NOT IMPLEMENTED"
+                          color="red"
+                          @click="toggleDialog(action.name, false)"
+                        />
+                      </q-card-actions>
+                    </q-card>
+                  </template>
+                </slot>
+              </template>
+              <template v-slot:confirm-action="{ action }">
+                <!-- Scoped slot for overriding confirm action -->
+                <slot
+                  :name="'confirm-' + action.name"
+                  :action="action"
+                  :closeDialog="() => toggleDialog(action.name, false)"
+                />
+              </template>
+              <template v-for="(errorMessages, field) in errors" :key="field">
+                <div
+                  v-for="message in errorMessages"
+                  :key="message"
+                  class="text-negative"
+                >
+                  {{ message }}
+                </div>
+              </template>
+            </q-dialog>
+          </q-btn>
+        </template>
+        <slot name="afterActions" />
+      </q-btn-group>
+    </template>
+
+    <script setup lang="ts">
+    import { computed, reactive, toRefs } from 'vue';
+    import { useForm } from '../composibles/use-form';
+    import { ActionListDTO } from '../ActionDTO';
+
+    interface DialogStates {
+      [key: string]: boolean;
+    }
+
+    // interface ActionStructure {
+    //   [key: string]: boolean;
+    // }
+
+    const props = defineProps({
+      baseModel: {
+        type: String,
+        required: true,
+      },
+      actions: {
+        type: Object as () => ActionListDTO,
+        required: true,
+      },
+      visibleActions: {
+        type: Array as () => string[],
+        default: () => [],
+      },
+      customActions: {
+        type: Object, // Object mapping action names to functions
+        default: () => ({}),
+      },
+
+      api: {
+        type: Function,
+        required: true,
+      },
+    });
+
+    const emit = defineEmits(['action-completed']);
+
+    const { customActions } = toRefs(props);
+
+    const noRecordActions = computed(() => {
+      const actionKeys = Object.keys(props.actions);
+      const filteredKeys =
+        props.visibleActions.length > 0
+          ? actionKeys.filter((key) => props.visibleActions.includes(key))
+          : actionKeys;
+      return filteredKeys
+        .filter((key) => props.actions[key].mode === 'NoRecord')
+        .map((key) => props.actions[key]);
+    });
+
+    // State to track dialog open/close for each action
+    const dialogStates = reactive(
+      noRecordActions.value.reduce((acc: DialogStates, action) => {
+        acc[action.name] = false;
+        return acc;
+      }, {})
+    );
+
+    const toggleDialog = (actionName, open = true) => {
+      dialogStates[actionName] = open;
+    };
+
+    // Outside the handleConfirmation method
+    const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
+      useForm(
+        props.api(),
+        `/qnatk/${props.baseModel}/execute-action`,
+        {} // Initialize with empty object or default values
+      );
+
+    callbacks.onSuccess = (data) => {
+      isLoading.value = false; // Reset loading state
+      errors.value = {}; // Reset errors
+      console.log('Success:', data);
+      // Handle success (e.g., show success message, refresh data)
+    };
+
+    callbacks.onError = (error) => {
+      isLoading.value = false; // Reset loading state
+      console.log('Error:', error);
+      // Handle error (e.g., show error message)
+    };
+
+    const handleActionClick = (action) => {
+      console.log('Action clicked:', action.name);
+      // Check if there's custom confirmation logic defined for this action
+      if (customActions.value[action.name]) {
+        // Execute the custom confirmation logic directly
+        customActions.value[action.name](action, () =>
+          toggleDialog(action.name, false)
+        );
+      } else {
+        // No custom confirmation logic, toggle the dialog for default handling
+        toggleDialog(action.name);
+      }
+    };
+
+    // Inside SingleRecordActions setup
+    const handleConfirmation = async (action) => {
+      updateUrl(`/qnatk/${props.baseModel}/actionExecute/${action.name}`);
+      // Prepare the form data
+      values.value = { action: action, records: props.records }; // Update form data
+
+      // Default confirmation logic
+      console.log('Confirmed action:', action.name);
+      await validateAndSubmit(); // Submit the form
+      if (Object.keys(errors.value).length === 0 && !isLoading.value) {
+        toggleDialog(action.name, false);
+        emit('action-completed', action.name); // Emitting the event
+      }
+    };
+    </script>
+
+    ====
+
+    File: components/QnatkEditor.vue
+    Content:
+
+    <template>
+      <q-field
+        :label="label"
+        :error="error"
+        :error-message="errorMessage"
+        stack-label
+        :dense="dense"
+        :rules="computedRules"
+        v-model="editorContent"
+      >
+        <template #control>
+          <q-editor
+            v-model="editorContent"
+            min-height="5rem"
+            class="full-width"
+            :class="{ 'is-error': error }"
+          />
+        </template>
+      </q-field>
+    </template>
+
+    <script setup lang="ts">
+    import { ref, watch, computed } from 'vue';
+
+    const props = defineProps({
+      modelValue: String,
+      label: String,
+      error: Boolean,
+      errorMessage: String,
+      rules: Array,
+      dense: Boolean,
+    });
+
+    const emit = defineEmits(['update:modelValue']);
+
+    const editorContent = ref(props.modelValue);
+
+    watch(
+      () => props.modelValue,
+      (newVal) => {
+        if (newVal !== editorContent.value) {
+          editorContent.value = newVal;
+        }
+      },
+      { immediate: true }
+    );
+
+    watch(editorContent, (newVal) => {
+      emit('update:modelValue', newVal);
+    });
+
+    const isEditorEmpty = (content) => {
+      // This function checks if the content is empty or if it only contains empty HTML tags
+      return (
+        !content || content.trim() === '<p><br></p>' || content.trim() === '<br>'
+      );
+    };
+
+    const computedRules = computed(() => {
+      const baseRules = [(val) => !isEditorEmpty(val) || 'Field is required'];
+      return props.rules ? baseRules.concat(props.rules) : baseRules;
+    });
+    </script>
+
+    <style scoped>
+    .q-editor.is-error {
+      border: 1px solid var(--q-color-negative);
+    }
+    </style>
+
+    ====
+
+    File: components/SimpleForm.vue
+    Content:
+
+    <template>
+      <q-card>
+        <q-card-section
+          ><slot name="title"
+            ><div class="text-h6">Title here: slot #title</div></slot
+          >
+        </q-card-section>
+        <q-form
+          class="q-gutter-xs"
+          @submit.prevent="validateAndSubmit"
+          v-bind="$attrs"
+        >
+          <q-card-section>
+            <div class="row q-col-gutter-md">
+              <template v-for="field in reactiveFormFields" :key="field.fieldId">
+                <div :class="`${field.colClass}`" v-if="field.isVisible">
+                  <template v-if="field.children">
+                    <component
+                      :is="field.component"
+                      v-bind="{ ...field.props, ...getDynamicProps(field) }"
+                    >
+                      <template
+                        v-for="childField in field.children"
+                        :key="childField.fieldId"
+                      >
+                        <div
+                          :class="`${childField.colClass}`"
+                          v-if="childField.isVisible"
+                        >
+                          <span
+                            class="q-px-sm"
+                            v-if="childField.props.isHeaderLabel"
+                          >
+                            {{ childField.props.label }}
+                            <span class="text-red">*</span>
+                          </span>
+                          <component
+                            :is="childField.component"
+                            v-bind="{
+                              ...childField.props,
+                              ...getDynamicProps(childField),
+                            }"
+                            v-model="values[childField.fieldId]"
+                            :error="!!errors[childField.fieldId]"
+                            :error-message="
+                              errors[childField.fieldId]
+                                ? errors[childField.fieldId].join('; ')
+                                : ''
+                            "
+                            :rules="getRules(childField)"
+                          >
+                            <template v-if="field.htmlContent">
+                              <component
+                                v-for="(item, index) in field.htmlContent"
+                                :key="index"
+                                :is="item.tag"
+                                v-bind="item.attrs"
+                              >
+                                {{ item.content }}
+                              </component>
+                            </template>
+                          </component>
+                        </div>
+                      </template>
+                    </component>
+                  </template>
+                  <template v-else>
+                    <span class="q-px-sm" v-if="field.props.isHeaderLabel">
+                      {{ field.props.label }} <span class="text-red">*</span>
+                    </span>
+                    <component
+                      :is="field.component"
+                      v-bind="{ ...field.props, ...getDynamicProps(field) }"
+                      v-model="values[field.fieldId]"
+                      :error="!!errors[field.fieldId]"
+                      :error-message="
+                        errors[field.fieldId]
+                          ? errors[field.fieldId].join('; ')
+                          : ''
+                      "
+                      :rules="getRules(field)"
+                    />
+                  </template>
+                </div>
+              </template>
+            </div>
+          </q-card-section>
+          <q-card-section align="right">
+            <q-btn
+              flat
+              @click.prevent="formConfig.callbacks?.onCanceled?.()"
+              color="primary"
+              v-close-popup
+            >
+              Cancel
+            </q-btn>
+            <q-btn
+              flat
+              type="submit"
+              color="primary"
+              :disable="disableMultipleSubmit && isLoading"
+              >Submit</q-btn
+            >
+          </q-card-section>
+        </q-form>
+      </q-card>
+    </template>
+
+    <script setup lang="ts">
+    import { FormConfig, FormField } from '../form-builder-interface';
+    import { useForm } from '../composibles/use-form';
+    import { computed, reactive, toRefs } from 'vue';
+
+    const props = defineProps({
+      formConfig: {
+        type: Object as () => FormConfig,
+        required: true,
+      },
+      initData: {
+        type: Object,
+        required: true,
+      },
+      disableMultipleSubmit: {
+        type: Boolean,
+        default: true,
+      },
+    });
+
+    const { initData } = toRefs(props);
+
+    const getNestedValue = (path, dataObject) => {
+      return path.split('.').reduce((value, key) => {
+        if (value && typeof value === 'object') {
+          return value[key];
+        }
+        return undefined;
+      }, dataObject);
+    };
+
+    // Making form fields reactive
+    const reactiveFormFields = computed(() => {
+      return props.formConfig.formFields.map((field) => ({
+        ...field,
+        isVisible: !field.showCondition || field.showCondition(values.value),
+        children: field.children?.map((childField) => ({
+          ...childField,
+          isVisible:
+            !childField.showCondition || childField.showCondition(values.value),
+        })),
+      }));
+    });
+
+    const defaultValues = reactive({ ...initData.value });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const initializeValues = (fields: any[]) => {
+      fields.forEach((field) => {
+        defaultValues[field.fieldId] = getNestedValue(
+          field.dataField,
+          props.initData
+        );
+        if (field.children) {
+          initializeValues(field.children);
+        }
+      });
+    };
+
+    initializeValues(props.formConfig.formFields);
+
+    // props.formConfig.formFields.forEach((field) => {
+    //   defaultValues[field.fieldId] = getNestedValue(
+    //     field.dataField,
+    //     props.initData
+    //   );
+    // });
+
+    const submitUrl = computed(() => {
+      const urlConfig = props.formConfig.submitUrl;
+      return typeof urlConfig === 'function'
+        ? urlConfig(props.initData)
+        : urlConfig;
+    });
+
+    const { values, validateAndSubmit, callbacks, errors, isLoading } = useForm(
+      props.formConfig?.api(),
+      submitUrl.value,
+      defaultValues
+    );
+
+    const getDynamicProps = (field: FormField) => {
+      if (!field.dynamicProps) return {};
+
+      const dynamicProps: Record<string, string> = {};
+      for (const [propName, fieldId] of Object.entries(field.dynamicProps)) {
+        dynamicProps[propName] = values.value[fieldId];
+      }
+      return dynamicProps;
+    };
+
+    const getRules = (field) => {
+      if (typeof field.props.rules === 'function') {
+        return field.props.rules(values);
+      }
+      return field.props.rules;
+    };
+
+    // Override useForm callbacks with those provided in formConfig
+    if (props.formConfig?.callbacks) {
+      if (props.formConfig.callbacks.onSuccess) {
+        callbacks.onSuccess = props.formConfig.callbacks.onSuccess;
+      }
+      if (props.formConfig.callbacks.onError) {
+        callbacks.onError = props.formConfig.callbacks.onError;
+      }
+      if (props.formConfig.callbacks.beforeSubmit) {
+        callbacks.beforeSubmit = props.formConfig.callbacks.beforeSubmit;
+      }
+    }
+    </script>
+
+    <style scoped></style>
+
+    ====
+
+    File: components/SingleRecordActions.vue
+    Content:
+
+    <template>
+      <q-btn-group :class="buttonGroupClasses">
+        <template v-for="action in singleRecordActions" :key="action.name">
+          <q-btn
+            v-if="
+              actionUnavailableBehavior === 'hide'
+                ? checkCondition(action, props.record)
+                : true
+            "
+            :disabled="
+              actionUnavailableBehavior === 'disable' &&
+              !checkCondition(action, props.record)
+            "
+            dense
+            flat
+            :icon="getIcon(action, props.record)"
+            :color="
+              actionUnavailableBehavior === 'disable' &&
+              !checkCondition(action, props.record)
+                ? 'grey'
+                : getIconColor(action, props.record)
+            "
+            size="sm"
+            @click="() => handleActionClick(action)"
+            :label="getLabel(action, props.record)"
+          >
+            <slot
+              :name="`${action.name}-outer`"
+              :action="action"
+              :record="props.record"
+              :closeDialog="() => toggleDialog(action.name, false)"
+              :confirmAction="() => handleConfirmation(action)"
+            >
+              <q-dialog v-model="dialogStates[action.name]" full-width>
+                <template v-if="isLoading">
+                  <q-spinner />
+                </template>
+                <template v-else>
+                  <slot
+                    :name="action.name"
+                    :action="action"
+                    :record="props.record"
+                    :closeDialog="() => toggleDialog(action.name, false)"
+                    :confirmAction="() => handleConfirmation(action)"
+                  >
+                    <!-- Check if the action UI is of type confirmation -->
+                    <template v-if="action.ui && action.ui.mode === 'confirmation'">
+                      <q-card>
+                        <q-card-section>
+                          <div class="text-h6">{{ action.ui.title }}</div>
+                          <div>{{ action.ui.message }}</div>
+                        </q-card-section>
+                        <q-card-actions align="right">
+                          <q-btn
+                            flat
+                            label="Cancel"
+                            color="primary"
+                            @click="toggleDialog(action.name, false)"
+                          />
+                          <q-btn
+                            flat
+                            label="Confirm"
+                            color="primary"
+                            @click="() => handleConfirmation(action)"
+                          />
+                        </q-card-actions>
+                      </q-card>
+                    </template>
+                    <template v-else>
+                      <q-card>
+                        <q-card-section>
+                          <div class="text-h6">{{ action.ui.title }}</div>
+                          <div>{{ action.ui.message }}</div>
+                        </q-card-section>
+                        <q-card-section>
+                          <q-banner icon="warning" class="bg-red-5" dark>
+                            <div class="text-h6">NOT IMPLEMENTED</div>
+                            <div>
+                              This action is not implemented yet. Please create a
+                              template in parent component with
+                              <b>'#{{ action.name }}'</b>
+                              slot.
+                            </div>
+                          </q-banner>
+                          <code>
+                            &lt;template #{{ action.name }}="{ action, closeDialog
+                            }"&gt; &lt;your-component :action="action"
+                            :record="props.row" :close-dialog="closeDialog"
+                            @action-completed="fetchData" &gt;&lt;/your-component>
+                            &lt;/template&gt;
+                          </code>
+                        </q-card-section>
+                        <q-card-actions align="right">
+                          <q-btn
+                            flat
+                            label="Cancel"
+                            color="primary"
+                            @click="toggleDialog(action.name, false)"
+                          />
+                          <q-btn
+                            flat
+                            label="NOT IMPLEMENTED"
+                            color="red"
+                            @click="toggleDialog(action.name, false)"
+                          />
+                        </q-card-actions>
+                      </q-card>
+                    </template>
+                  </slot>
+                </template>
+                <template v-slot:confirm-action="{ action }">
+                  <!-- Scoped slot for overriding confirm action -->
+                  <slot
+                    :name="'confirm-' + action.name"
+                    :action="action"
+                    :closeDialog="() => toggleDialog(action.name, false)"
+                  />
+                </template>
+                <template v-for="(errorMessages, field) in errors" :key="field">
+                  <div
+                    v-for="message in errorMessages"
+                    :key="message"
+                    class="text-negative"
+                  >
+                    {{ message }}
+                  </div>
+                </template>
+              </q-dialog>
+            </slot>
+          </q-btn>
+        </template>
+        <slot />
+      </q-btn-group>
+    </template>
+
+    <script setup lang="ts">
+    import { computed, reactive, toRefs } from 'vue';
+    import { useForm } from '../composibles/use-form';
+    import { ActionListDTO } from '../ActionDTO';
+
+    interface DialogStates {
+      [key: string]: boolean;
+    }
+
+    const props = defineProps({
+      baseModel: {
+        type: String,
+        required: true,
+      },
+      actions: {
+        type: Object as () => ActionListDTO,
+        required: true,
+      },
+      visibleActions: {
+        type: Array as () => string[],
+        default: () => [],
+      },
+      record: {
+        type: Object,
+        required: true,
+      },
+      customActions: {
+        type: Object, // Object mapping action names to functions
+        default: () => ({}),
+      },
+      actionUnavailableBehavior: {
+        type: String,
+        default: 'disable', // or 'hide'
+      },
+      api: {
+        type: Function,
+        required: true,
+      },
+      buttonGroupClasses: {
+        type: String,
+        default: '',
+      },
+      qnatkUrl: {
+        type: String,
+        default: '/qnatk',
+      },
+    });
+
+    const emit = defineEmits(['action-completed']);
+
+    const { customActions } = toRefs(props);
+
+    const checkCondition = (action, record) => {
+      const evaluateCondition = (conditionValue, recordValue) => {
+        if (Array.isArray(conditionValue)) {
+          return conditionValue.includes(recordValue); // 'OR' condition
+        }
+        return conditionValue === recordValue; // Single value condition
+      };
+
+      if (!action.condition) {
+        return true; // If no condition is specified, the action is always available
+      }
+
+      for (const [key, value] of Object.entries(action.condition)) {
+        // If any condition fails, return false
+        if (!evaluateCondition(value, record[key])) {
+          return false;
+        }
+      }
+      return true; // All conditions passed
+    };
+
+    const singleRecordActions = computed(() => {
+      const actionKeys = Object.keys(props.actions);
+      const filteredKeys =
+        props.visibleActions.length > 0
+          ? actionKeys.filter((key) => props.visibleActions.includes(key))
+          : actionKeys;
+
+      return filteredKeys
+        .filter((key) => props.actions[key].mode === 'SingleRecord')
+        .map((key) => props.actions[key]);
+    });
+
+    // State to track dialog open/close for each action
+    const dialogStates = reactive(
+      singleRecordActions.value.reduce((acc: DialogStates, action) => {
+        acc[action.name] = false;
+        return acc;
+      }, {})
+    );
+
+    const handleActionClick = (action) => {
+      console.log('Action clicked:', action.name);
+      // Check if there's custom confirmation logic defined for this action
+      if (customActions.value[action.name]) {
+        // Execute the custom confirmation logic directly
+        customActions.value[action.name](action, props.record, () =>
+          toggleDialog(action.name, false)
+        );
+      } else {
+        // No custom confirmation logic, toggle the dialog for default handling
+        toggleDialog(action.name);
+      }
+    };
+
+    const toggleDialog = (actionName, open = true) => {
+      dialogStates[actionName] = open;
+    };
+
+    const getIcon = (action, record) => {
+      // console.log(action, record);
+      if (typeof action.icon === 'string') {
+        return action.icon; // Return the string directly if it's a string
+      } else if (typeof action.icon === 'object') {
+        // Iterate through the object keys and check conditions
+        for (const [key, condition] of Object.entries(action.icon)) {
+          if (checkCondition({ condition }, record)) {
+            return key; // Return the key (icon) that matches the condition
+          }
+        }
+      }
+      return null; // Default icon or handle this case as needed
+    };
+
+    const getIconColor = (action, record) => {
+      if (typeof action.iconColor === 'string') {
+        return action.iconColor; // Return the string directly if it's a string
+      } else if (typeof action.iconColor === 'object') {
+        // Iterate through the object keys and check conditions
+        for (const [key, condition] of Object.entries(action.iconColor)) {
+          if (checkCondition({ condition }, record)) {
+            return key; // Return the key (icon) that matches the condition
+          }
+        }
+      }
+      return 'primary'; // Default icon or handle this case as needed
+    };
+
+    const getLabel = (action, record) => {
+      if (typeof action.label === 'string') {
+        return action.label; // Return the string directly if it's a string
+      } else if (typeof action.label === 'object') {
+        // Iterate through the object keys and check conditions
+        for (const [key, condition] of Object.entries(action.label)) {
+          if (checkCondition({ condition }, record)) {
+            return key; // Return the key (icon) that matches the condition
+          }
+        }
+      }
+      return null; // Default icon or handle this case as needed
+    };
+
+    // Outside the handleConfirmation method
+    const { values, validateAndSubmit, isLoading, errors, updateUrl, callbacks } =
+      useForm(
+        props.api(),
+        `${props.qnatkUrl}/${props.baseModel}/actionExecute`,
+        {} // Initialize with empty object or default values
+      );
+
+    // callbacks.onError = (error) => {
+    //   isLoading.value = false; // Reset loading state
+    //   console.log('Error:', error);
+    // };
+
+    // Inside SingleRecordActions setup
+    const handleConfirmation = async (action) => {
+      const baseModel = action.baseModel ?? props.baseModel;
+
+      updateUrl(`${props.qnatkUrl}/${baseModel}/actionExecute/${action.name}`);
+      // Prepare the form data
+      values.value = props.record; // Update form data
+
+      callbacks.onSuccess = (data) => {
+        isLoading.value = false; // Reset loading state
+        errors.value = {}; // Reset errors
+        emit('action-completed', { action, modelInstance: data.modelInstance }); // Emitting the event
+        // Handle success (e.g., show success message, refresh data)
+      };
+
+      // Default confirmation logic
+      console.log('Confirmed action:', action.name);
+      await validateAndSubmit(); // Submit the form
+      if (Object.keys(errors.value).length === 0 && !isLoading.value) {
+        toggleDialog(action.name, false);
+      }
+    };
+    </script>
+
+    ====
+
+  src/components/qnatk/composibles/
+    File: composibles/use-autocomplete.ts
+    Content:
+
+    // useAutocomplete.ts
+    import { ref, Ref } from 'vue';
+    import axios, { AxiosInstance } from 'axios';
+    import {
+      AutocompleteFunction,
+      ModelOptions,
+      SelectOption,
+    } from '../QnatkListDTO';
+
+    export function useAutocomplete(
+      api: AxiosInstance,
+      baseModel: string,
+      getModelOptionsFn: AutocompleteFunction<ModelOptions>,
+      getFetchInitialValueOptionsFn: AutocompleteFunction<ModelOptions>,
+      valueFieldName = 'id',
+      labelFieldName = 'name',
+      url = 'qnatk'
+    ) {
+      const searchTerm: Ref<string> = ref('');
+      const suggestions: Ref<Array<{ label: string; value: number }>> = ref([]);
+      const isLoading: Ref<boolean> = ref(false);
+      const selected: Ref<{
+        label: string;
+        value: number;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        [key: string]: any;
+      } | null> = ref(null);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      function getNestedPropertyValue(obj: any, path: string): any {
+        return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+      }
+
+      async function performSearch(val: string, endpoint: string): Promise<void> {
+        if (val.length < 2) {
+          suggestions.value = [];
+          return;
+        }
+
+        isLoading.value = true;
+        try {
+          const modelOptions = getModelOptionsFn(val);
+          const response = await api.post<SelectOption[]>(
+            `${url}/${baseModel}${endpoint}`,
+            {
+              ...modelOptions,
+              limit: modelOptions.limit ?? 10,
+              offset: modelOptions.offset ?? 0,
+              sortByDescending: false,
+              sortBy: 'id',
+            }
+          );
+
+          suggestions.value = response.data.map((item: SelectOption) => ({
+            ...item,
+            label: getNestedPropertyValue(item, labelFieldName) as string,
+            value: item[valueFieldName] as number,
+          }));
+        } catch (error) {
+          console.error('Error fetching suggestions:', error);
+        } finally {
+          isLoading.value = false;
+        }
+      }
+
+      async function search(val: string): Promise<void> {
+        await performSearch(val, '/list');
+      }
+
+      async function filterFn(
+        val: string,
+        update: () => void,
+        abort: () => void
+      ): Promise<void> {
+        try {
+          await performSearch(val, '/list');
+          update();
+        } catch {
+          abort();
+        }
+      }
+
+      async function fetchInitialValue(id: number): Promise<void> {
+        if (!id) return;
+        isLoading.value = true;
+        try {
+          const modelOptions = getFetchInitialValueOptionsFn(id.toString());
+          const response = await api.post<SelectOption[]>(
+            `${url}/${baseModel}/list`,
+            {
+              ...modelOptions,
+              limit: 10,
+              offset: 0,
+              sortByDescending: false,
+              sortBy: 'id',
+            }
+          );
+
+          if (response.data.length > 0) {
+            const item = response.data[0];
+            selected.value = {
+              ...item,
+              label: getNestedPropertyValue(item, labelFieldName) as string,
+              value: item[valueFieldName] as number,
+            };
+            searchTerm.value = item[labelFieldName] as string;
+          } else {
+            console.error('No data found for ID:', id);
+            selected.value = null;
+          }
+        } catch (error) {
+          console.error('Error fetching initial value:', error);
+          selected.value = null;
+        } finally {
+          isLoading.value = false;
+        }
+      }
+
+      return {
+        searchTerm,
+        suggestions,
+        isLoading,
+        search,
+        selected,
+        filterFn,
+        fetchInitialValue,
+      };
+    }
+
+    ====
+
+    File: composibles/use-datatable.ts
+    Content:
+
+    import { reactive, ref, watch } from 'vue';
+    import {
+      ModelOptions,
+      PaginationOption,
+      TransformedSortOption,
+    } from '../QnatkListDTO';
+    import { exportFile, useQuasar } from 'quasar';
+    import { AxiosInstance } from 'axios';
+    import { ActionListDTO } from '../ActionDTO';
+
+    interface RequestProps {
+      pagination: {
+        sortBy: string;
+        descending: boolean;
+        page: number;
+        rowsPerPage: number;
+        rowsNumber: number;
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      filter?: any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      getCellValue: (col: any, row: any) => any;
+    }
+
+    export function useDatatable<T>(
+      api: AxiosInstance,
+      baseModelDefault: string,
+      baseUrl = 'qnatk',
+      transformSortBy: (sortBy: string) => string | TransformedSortOption = (
+        sortBy
+      ) => sortBy,
+      dpp = -1
+    ) {
+      // Default to no transformation)
+      const data = ref<T[]>([]);
+      const responseData = ref<T[]>([]);
+      const actions = ref<ActionListDTO>({});
+      const loading = ref(false);
+      const error = ref(false);
+      const baseModel = ref(baseModelDefault);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fetchOptions = ref<ModelOptions>({} as ModelOptions);
+      const pagination = ref<PaginationOption>({
+        page: 1,
+        rowsPerPage: 10,
+        sortBy: 'id',
+        descending: true,
+        rowsNumber: 0,
+      });
+
+      const lacHookName = ref('');
+
+      const callBacks = reactive({
+        rowIterator: (row: T) => row,
+        downloadRowIterator: null as ((row: T) => T) | null,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        aclCan: (actionName: string, baseModel: string): boolean => true, // default implementation
+      });
+
+      const $q = useQuasar();
+
+      // Centralized error handling with a watcher
+      watch(error, (err) => {
+        if (err) {
+          $q.notify({
+            color: 'negative',
+            message: err as unknown as string,
+            icon: 'report_problem',
+          });
+        }
+      });
+
+      const defaultDownloadRowIterator = (row: T) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const flattenObject = (obj: any, parentKey = '', res: any = {}) => {
+          for (const [key, value] of Object.entries(obj)) {
+            const newKey = parentKey ? `${parentKey}_${key}` : key;
+
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+              flattenObject(value, newKey, res);
+            } else if (Array.isArray(value)) {
+              res[newKey + '_count'] = value.length;
+            } else {
+              res[newKey] = value;
+            }
+          }
+          return res;
+        };
+        return flattenObject(row);
+      };
+
+      const processRows = (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: any,
+        page: number | undefined = undefined,
+        rowsPerPage: number | undefined = undefined,
+        rowIterator: (row: T) => T = (row) => row,
+        addSNo = true
+      ) => {
+        const startIndex = page && rowsPerPage ? (page - 1) * rowsPerPage : 0;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return data.map((item: any, index: number) => {
+          return {
+            s_no: addSNo ? startIndex + index + 1 : undefined,
+            ...rowIterator(item),
+          };
+        });
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fetchData = async (options?: any) => {
+        loading.value = true;
+        error.value = false;
+
+        // Construct the modelOptions with pagination
+        const effectiveModelOptions = {
+          ...fetchOptions.value,
+          limit: pagination.value.rowsPerPage,
+          offset: (pagination.value.page - 1) * pagination.value.rowsPerPage,
+          sortByDescending: pagination.value.descending,
+          ...options,
+        };
+
+        if (effectiveModelOptions.limit === 0) {
+          delete effectiveModelOptions.limit;
+          delete effectiveModelOptions.offset;
+        }
+
+        // Apply the transformation to the sortBy, if present
+        if (pagination.value.sortBy) {
+          effectiveModelOptions.sortBy = transformSortBy(pagination.value.sortBy);
+        }
+
+        try {
+          const response = await api.post(
+            `${baseUrl}/${baseModel.value}/list-and-count` +
+              (lacHookName.value ? '/' + lacHookName.value : ''),
+            effectiveModelOptions
+          );
+
+          data.value = response.data.rows;
+          data.value = processRows(
+            data.value,
+            pagination.value.page,
+            pagination.value.rowsPerPage,
+            callBacks.rowIterator
+          );
+          responseData.value = response.data;
+          pagination.value.rowsNumber = Array.isArray(response.data.count)
+            ? response.data.count.length
+            : response.data.count;
+          const filteredActions: ActionListDTO = {};
+          Object.entries(response.data.actions as ActionListDTO).forEach(
+            ([key, action]) => {
+              if (callBacks.aclCan(key, baseModel.value)) {
+                filteredActions[key] = action;
+              }
+            }
+          );
+          actions.value = filteredActions;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
+          error.value =
+            e.response?.data.message || e.message || 'An error occurred';
+          console.log('error', e);
+        } finally {
+          loading.value = false;
+        }
+      };
+
+      const onRequest = (props: RequestProps): void => {
+        pagination.value = props.pagination;
+        fetchData().then((r) => r);
+      };
+
+      const closeDialogAndReload = () => {
+        pagination.value.page = 1;
+        fetchData();
+        return false;
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const arrayToCSV = (array: any) => {
+        const header = Object.keys(array[0]).join(',');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rows = array.map((obj: any) =>
+          Object.values(obj)
+            .map((value) => (typeof value === 'string' ? `"${value}"` : value))
+            .join(',')
+        );
+        return [header, ...rows].join('\n');
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const downloadData = async (options?: any) => {
+        loading.value = true;
+        error.value = false;
+
+        // Construct the modelOptions with pagination
+        const effectiveModelOptions = {
+          ...fetchOptions.value,
+          sortByDescending: pagination.value.descending,
+          ...options,
+        };
+
+        // Apply the transformation to the sortBy, if present
+        if (pagination.value.sortBy) {
+          effectiveModelOptions.sortBy = transformSortBy(pagination.value.sortBy);
+        }
+
+        try {
+          let offset = 0;
+          let hasMoreData = true;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const dataArray: Record<string, any>[] = [];
+          console.log('starting fetch iterator :');
+          while (hasMoreData) {
+            console.log('fetching offset,dpp :', offset, dpp);
+            if (dpp > 0) {
+              effectiveModelOptions.limit = dpp;
+              effectiveModelOptions.offset = offset;
+            }
+            const response = await api.post(
+              `${baseUrl}/${baseModel.value}/list`,
+              effectiveModelOptions
+            );
+            if (dpp > 0) {
+              offset += dpp;
+            }
+            if (response.data.length) {
+              dataArray.push(...response.data);
+            }
+            if (dpp < 0 || response.data.length < dpp) {
+              hasMoreData = false;
+            }
+          }
+
+          const data = processRows(
+            dataArray,
+            undefined,
+            undefined,
+            callBacks.downloadRowIterator || defaultDownloadRowIterator
+          );
+
+          const csvString = arrayToCSV(data);
+          const status = exportFile('file.csv', csvString, {
+            encoding: 'windows-1252',
+            mimeType: 'text/csv;charset=windows-1252;',
+          });
+
+          console.log('status', status);
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
+          error.value =
+            e.response?.data.message || e.message || 'An error occurred';
+        } finally {
+          loading.value = false;
+        }
+      };
+
+      const changeBaseModel = (newBaseModel: string) => {
+        baseModel.value = newBaseModel;
+      };
+
+      return {
+        callBacks,
+        fetchOptions,
+        data,
+        responseData,
+        actions,
+        pagination,
+        loading,
+        error,
+        fetchData,
+        onRequest,
+        closeDialogAndReload,
+        downloadData,
+        lacHookName,
+        changeBaseModel,
+      };
+    }
+
+    ====
+
+    File: composibles/use-find.ts
+    Content:
+
+    import { Ref, ref } from 'vue';
+    import axios, { AxiosInstance } from 'axios';
+    import { exportFile } from 'quasar';
+
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type ModelOptions = any; // Replace with your actual type
+
+    export function useFind(api: AxiosInstance, baseUrl: string) {
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const findAll = async <T = any>(
+        baseModel: string,
+        findOptions: ModelOptions
+      ) => {
+        const data: Ref<T[] | null> = ref(null);
+        const loading = ref(false);
+        const error = ref<string | null>(null);
+
+        loading.value = true;
+        try {
+          const response = await api.post(`${baseUrl}/${baseModel}/list`, {
+            ...findOptions,
+            limit: findOptions.limit ?? undefined,
+            offset: findOptions.offset ?? undefined,
+          });
+          data.value = response.data as T[];
+        } catch (e: unknown) {
+          if (axios.isAxiosError(e)) {
+            error.value =
+              e.response?.data?.message || e.message || 'An error occurred';
+          } else {
+            error.value = e as string;
+          }
+        } finally {
+          loading.value = false;
+        }
+
+        return { data, error, loading };
+      };
+
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const findOne = async <T = any>(
+        baseModel: string,
+        findOptions: ModelOptions
+      ) => {
+        const data: Ref<T | null> = ref(null);
+        const loading = ref(false);
+        const error = ref<string | null>(null);
+
+        loading.value = true;
+        try {
+          const response = await api.post(`${baseUrl}/${baseModel}/list`, {
+            ...findOptions,
+            limit: 1,
+            offset: findOptions.offset ?? 0,
+          });
+          data.value = response.data[0] as T;
+        } catch (e: unknown) {
+          if (axios.isAxiosError(e)) {
+            error.value =
+              e.response?.data?.message || e.message || 'An error occurred';
+          } else {
+            error.value = e as string;
+          }
+        } finally {
+          loading.value = false;
+        }
+
+        return { data, error, loading };
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const arrayToCSV = (array: any) => {
+        const header = Object.keys(array[0]).join(',');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rows = array.map((obj: any) =>
+          Object.values(obj)
+            .map((value) => (typeof value === 'string' ? `"${value}"` : value))
+            .join(',')
+        );
+        return [header, ...rows].join('\n');
+      };
+
+      const downloadData = async (baseModel: string, findOptions: ModelOptions) => {
+        const downloading = ref(false);
+        const error = ref<string | null>(null);
+        const {
+          data,
+          error: findError,
+          loading,
+        } = await findAll(baseModel, findOptions);
+        if (!data.value) {
+          error.value = findError.value;
+          return;
+        }
+        const csvString = arrayToCSV(data.value);
+        const status = exportFile('file.csv', csvString, {
+          encoding: 'windows-1252',
+          mimeType: 'text/csv;charset=windows-1252;',
+        });
+      };
+
+      return { findAll, findOne };
+    }
+
+    ====
+
+    File: composibles/use-form.ts
+    Content:
+
+    import { reactive, ref } from 'vue';
+    import { useQuasar } from 'quasar';
+    import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+    import { validate } from 'class-validator';
+    import { instanceToPlain, plainToInstance } from 'class-transformer';
+
+    type FormErrors = Record<string, string[]>;
+    type ErrorResponse = {
+      errors: FormErrors;
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    export function useForm<ResponseFormat extends Record<string, any>>(
+      api: AxiosInstance, // Add the AxiosInstance parameter
+      initialUrl: string,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      defaultValues: Record<string, any>,
+      METHOD: 'post' | 'get' = 'post'
+    ) {
+      const $q = useQuasar();
+      const values = ref({ ...defaultValues });
+      const errors = ref<FormErrors>({});
+      const isLoading = ref(false);
+      const responseData = ref<ResponseFormat | ResponseFormat[]>(
+        [] as unknown as ResponseFormat[]
+      );
+
+      const url = ref(initialUrl);
+
+      // Define the callback functions in a reactive object
+      const callbacks = reactive({
+        // Define a default implementation for onSuccess
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onSuccess: (data: any): any | Promise<any> => {
+          $q.notify({ color: 'positive', message: 'Form submitted successfully!' });
+          return data; // Return the input parameter
+        },
+        // Define a default implementation for onError
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onError: async (error: any): Promise<never> => {
+          if (axios.isAxiosError(error) && error.response) {
+            const errorResponse = error.response.data as ErrorResponse;
+            if (errorResponse && errorResponse.errors) {
+              errors.value = errorResponse.errors;
+              Object.entries(errors.value).forEach(([field, messages]) => {
+                if (!(field in defaultValues)) {
+                  $q.notify({
+                    color: 'negative',
+                    message: `${field}: ${messages.join('; ')}`,
+                  });
+                }
+              });
+            } else {
+              $q.notify({
+                color: 'negative',
+                message:
+                  error.response.data.statusCode +
+                  ' ' +
+                  error.response.data.message,
+              });
+            }
+          } else {
+            $q.notify({
+              color: 'negative',
+              message: 'An unexpected error occurred.',
+            });
+          }
+          throw error; // Throw the input error
+        },
+        // Define a default implementation for beforeSubmit
+        beforeSubmit: (
+          values: Record<string, unknown>
+        ): Record<string, unknown> | Promise<Record<string, unknown>> => {
+          return values; // Default implementation
+        },
+      });
+
+      async function validateResponse(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: any,
+        DTOClass: new () => ResponseFormat
+      ): Promise<ResponseFormat> {
+        if (!DTOClass) return data; // If no DTO class is provided, return the data as is
+
+        const dtoInstance = plainToInstance(DTOClass, data);
+        const validationErrors = await validate(dtoInstance);
+
+        if (validationErrors.length > 0) {
+          throw validationErrors; // Throw validation errors
+        }
+
+        return instanceToPlain(dtoInstance) as ResponseFormat; // Return the transformed and validated data
+      }
+
+      // Function to update the URL
+      const updateUrl = (newUrl: string) => {
+        url.value = newUrl;
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const isFile = (value: any): value is File => {
+        return value instanceof File;
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const containsFiles = (obj: any): boolean => {
+        if (isFile(obj)) {
+          return true;
+        } else if (Array.isArray(obj)) {
+          return obj.some(containsFiles);
+        } else if (typeof obj === 'object' && obj !== null) {
+          return Object.values(obj).some(containsFiles);
+        }
+        return false;
+      };
+
+      const validateAndSubmit = async (resetForm = true) => {
+        errors.value = {};
+        isLoading.value = true;
+
+        // Check if beforeSubmit is asynchronous (returns a promise)
+        let data_to_submit = await callbacks.beforeSubmit(values.value);
+
+        if (!data_to_submit) {
+          data_to_submit = values.value;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let payload: FormData | Record<string, any>;
+        const hasFiles = containsFiles(values.value);
+
+        if (hasFiles) {
+          payload = new FormData();
+          Object.entries(data_to_submit).forEach(([key, value]) => {
+            if (isFile(value)) {
+              payload.append(key, value);
+            } else if (Array.isArray(value) && value.some(isFile)) {
+              value.forEach((file) => {
+                if (isFile(file)) {
+                  payload.append(key, file);
+                }
+              });
+            } else {
+              // Check if the value is an object and not a File, and stringify it
+              if (
+                typeof value === 'object' &&
+                value !== null &&
+                !(value instanceof File)
+              ) {
+                payload.append(key, JSON.stringify(value));
+              } else {
+                payload.append(key, value);
+              }
+            }
+          });
+        } else {
+          payload = data_to_submit;
+        }
+
+        const config: AxiosRequestConfig = {
+          headers: {
+            'Content-Type': hasFiles ? 'multipart/form-data' : 'application/json',
+          },
+        };
+
+        try {
+          const response = await api[METHOD](url.value, payload, config);
+          responseData.value = response.data;
+          if (resetForm) values.value = { ...defaultValues };
+          await callbacks.onSuccess(response.data);
+        } catch (error) {
+          await callbacks.onError(error);
+          console.error(error);
+        } finally {
+          isLoading.value = false;
+        }
+      };
+
+      const resetForm = () => {
+        values.value = { ...defaultValues };
+      };
+
+      return {
+        values,
+        errors,
+        isLoading,
+        updateUrl,
+        validateAndSubmit,
+        validateResponse,
+        responseData,
+        callbacks,
+        resetForm,
+      };
+    }
+
+    ====
+
+    File: composibles/use-serverside-fetch-immediate.ts
+    Content:
+
+    import { ref } from 'vue';
+    import { api } from 'boot/axios';
+    import { ModelOptions } from '../QnatkListDTO';
+
+    interface Pagination {
+      page: number;
+      rowsPerPage: number;
+      sortBy: string;
+      descending: boolean;
+      rowsNumber: number;
+    }
+
+    export function useFetchImmediate<T>(baseUrl = 'qnatk') {
+      const data = ref<T[]>([]);
+      const loading = ref(false);
+      const error = ref(false);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pagination = ref<Pagination>({
+        page: 1,
+        rowsPerPage: 10,
+        sortBy: 'id',
+        descending: false,
+        rowsNumber: 0,
+      });
+
+      const fetchImmediateData = async (
+        baseModel: string,
+        immediateOptions: ModelOptions
+      ) => {
+        loading.value = true;
+        error.value = false;
+        try {
+          const response = await api.post(
+            baseUrl + '/' + baseModel + '/list',
+            immediateOptions
+          );
+          // Handle the response as needed
+          // For example, you might want to return the data or set it to a local variable
+          return response.data; // or set to a local reactive state
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
+          error.value = e.response.data.message;
+          // Handle the error, e.g., by showing a notification
+        } finally {
+          loading.value = false;
+        }
+      };
+
+      return {
+        data,
+        pagination,
+        loading,
+        error,
+        fetchImmediateData,
+      };
+    }
+
+    ====
+
+    File: composibles/use-unique-check.ts
+    Content:
+
+    // useUniqueCheck.ts
+    import { ref } from 'vue';
+    import { api } from 'boot/axios';
+    import { ModelOptions } from '../QnatkListDTO';
+
+    export function useUniqueCheck(
+      baseModel: string,
+      modelOptionsFn: () => ModelOptions,
+      errorMessageFormatter: (value: Record<string, unknown>) => string = () =>
+        'Value not unique',
+      baseUrl = 'qnatk'
+    ) {
+      const isUnique = ref(true);
+      const errorMessage = ref('');
+
+      const triggerCheckUniqueness = async ($event: unknown) => {
+        console.log('triggerCheckUniqueness', $event);
+        if (!$event) {
+          errorMessage.value = '';
+          return;
+        }
+        try {
+          const modelOptions = modelOptionsFn();
+          errorMessage.value = 'Checking ...';
+          const response = await api.post(`${baseUrl}/${baseModel}/list`, {
+            ...modelOptions,
+            limit: 1,
+          });
+          // Here you might expect a specific response structure indicating uniqueness
+          isUnique.value = response.data.length === 0;
+          errorMessage.value = isUnique.value
+            ? ''
+            : errorMessageFormatter(response.data[0]);
+        } catch (e) {
+          errorMessage.value = 'Error checking uniqueness';
+        }
+      };
+
+      return {
+        isUnique,
+        errorMessage,
+        triggerCheckUniqueness,
+      };
+    }
+
+    ====
+
+  File: form-builder-interface.ts
+  Content:
+
+  // Define the base interface for a form field
+  import { AxiosInstance } from 'axios';
+  import { Component } from 'vue';
+
+  interface HtmlContentItem {
+    tag: string;
+    attrs?: Record<string, string>;
+    content?: string;
+  }
+
+  export interface FormField {
+    fieldId: string;
+    dataField: string;
+    colClass: string; // Column size
+    component: string | Component; // Replace with specific Vue component type as needed
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    props: Record<string, any>; // Replace 'any' with specific type as needed
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    showCondition?: (values: Record<string, any>) => boolean; // Optional visibility condition
+    children?: FormField[];
+    htmlContent?: HtmlContentItem[];
+    dynamicProps?: {
+      [key: string]: string; // Key is the prop name, value is the fieldId to get the value from
+    };
+  }
+
+  interface FormCallback {
+    onCanceled?: () => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSuccess?: (data: any) => any | Promise<any>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError?: (error: any) => Promise<never>;
+    beforeSubmit?: (
+      values: Record<string, unknown>
+    ) => Record<string, unknown> | Promise<Record<string, unknown>>;
+  }
+
+  // The entire form configuration is now just an array of fields
+
+  // Define the overall form configuration interface
+  export interface FormConfig {
+    api: () => AxiosInstance;
+    formFields: FormField[];
+    submitUrl: string | ((data?: Record<string, unknown>) => string);
+    callbacks?: FormCallback;
+  }
+
+  ====
+
+now here are a few exmaple of how we are using these in out project and you will have to generate code like the following only. no change in above framework code is requried.
+
+== AccountAutoSelect.vue
+<template>
+  <AutoSelect
+    :api="() => api"
+    :base-model="props.baseModel"
+    :model-value="props.modelValue"
+    :label="props.label"
+    :attributes="
+      props.attributes ?? [
+        'id',
+        'AccountNumber',
+        'scheme_name',
+        'scheme_type',
+        'scheme_sub_type',
+        'branch_id',
+        'account_type',
+        'Group',
+      ]
+    "
+    :include="
+      props.include ?? [
+        {
+          model: 'Member',
+          as: 'member',
+          attributes: ['id', 'name', 'FatherOrHusbandName'],
+        },
+      ]
+    "
+    :where="
+      props.where ??
+      ((val) => ({
+        $or: {
+          AccountNumber: { $like: `%${val}%` },
+          '$member.name$': { $like: `%${val}%` },
+        },
+        branch_id: props.currentBranchOnly ? $currentUser.branch_id : undefined,
+      }))
+    "
+    :sub-query="props.subQuery ?? false"
+    :value-field-name="props.valueFieldName"
+    :label-field-name="props.labelFieldName"
+    :placeholder="props.placeholder"
+    :error="props.error"
+    :error-message="props.errorMessage"
+    v-bind="$attrs"
+  >
+    <!-- Providing slots from the parent component -->
+    <template
+      v-for="(slotName, index) in Object.keys($slots)"
+      :key="index"
+      #[slotName]="slotProps"
+    >
+      <slot :name="slotName" v-bind="slotProps"></slot>
+    </template>
+    <template v-slot:selected-item="{ opt }">
+      <q-item-section v-if="opt">
+        <q-item-label>
+          {{ (opt as any).AccountNumber }} ({{ (opt as any).id }})
+          <q-item-label caption>
+            {{ (opt as any).member.name }} ({{
+              (opt as any).member.FatherOrHusbandName
+            }})
+          </q-item-label>
+        </q-item-label>
+      </q-item-section>
+    </template>
+    <template v-slot:no-option>
+      <q-item>
+        <q-item-section class="text-italic text-grey">
+          No Account Found
+        </q-item-section>
+      </q-item>
+    </template>
+
+    <template v-slot:option="{ itemProps, opt }">
+      <q-item v-bind="itemProps">
+        <q-item-section avatar>
+          <q-icon name="warning" color="red" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label>{{ (opt as any).id }}</q-item-label>
+          <q-item-label caption>
+            {{ (opt as any).AccountNumber }}
+          </q-item-label>
+          <q-item-label caption>{{ (opt as any).member.name }}</q-item-label>
+        </q-item-section>
+      </q-item>
+    </template>
+  </AutoSelect>
+</template>
+
+<script setup lang="ts">
+import AutoSelect from 'components/qnatk/components/AutoSelect.vue';
+import { api } from 'boot/axios';
+import { autoCompletePropTypes } from 'components/qnatk/QnatkListDTO';
+
+const props = defineProps({
+  ...autoCompletePropTypes,
+  baseModel: {
+    type: String,
+    default: 'Account',
+  },
+  label: {
+    type: String,
+    default: 'AccountNumber',
+  },
+  valueFieldName: {
+    type: String,
+    default: 'id',
+  },
+  labelFieldName: {
+    type: String,
+    default: 'AccountNumber',
+  },
+  currentBranchOnly: {
+    type: Boolean,
+    default: false,
+  },
+});
+</script>
+
+<!--:where="-->
+<!--      props.where ??-->
+<!--      ((val) => ({-->
+<!--        $or: [-->
+<!--          {-->
+<!--            $fullText: [-->
+<!--              { table: 'Account', query: val, fields: ['AccountNumber'] },-->
+<!--            ],-->
+<!--          },-->
+<!--          {-->
+<!--            $fullText: [{ table: 'Member', query: val, fields: ['name'] }],-->
+<!--          },-->
+<!--        ],-->
+
+<!--        branch_id: props.currentBranchOnly ? $currentUser.branch_id : undefined,-->
+<!--      }))-->
+<!--    "-->
+
+=== MemberAutoSelect.vue
+<template>
+  <AutoSelect
+    :api="() => api"
+    :base-model="baseModel"
+    :model-value="modelValue"
+    :label="label"
+    :attributes="attributes ?? ['id', 'name', 'FatherName', 'member_no']"
+    :where="
+      where ??
+      ((val) => ({
+        $or: {
+          name: { $like: `%${val}%` },
+          member_no: `${val}`,
+        },
+      }))
+    "
+    :value-field-name="valueFieldName"
+    :label-field-name="labelFieldName"
+    :placeholder="placeholder"
+    :error="error"
+    :error-message="errorMessage"
+    v-bind="$attrs"
+  >
+    <!-- Providing slots from the parent component -->
+    <template
+      v-for="(slotName, index) in Object.keys($slots)"
+      :key="index"
+      #[slotName]="slotProps"
+    >
+      <slot :name="slotName" v-bind="slotProps"></slot>
+    </template>
+    <template v-slot:selected-item="{ opt }">
+      <!-- <q-item v-bind="itemProps"> -->
+      <q-item-section avatar>
+        <q-icon name="warning" color="red" />
+      </q-item-section>
+      <q-item-section>
+        {{ (opt as any).name }} [{{ (opt as any).member_no }}] ::
+        {{ (opt as any).FatherName }}
+        <!-- <q-item-label>{{ (opt as any).member_no }}</q-item-label>
+        <q-item-label caption>
+          {{ (opt as any).name }}
+        </q-item-label>
+        <q-item-label caption>({{ (opt as any).FatherName }})</q-item-label> -->
+      </q-item-section>
+      <!-- </q-item> -->
+    </template>
+    <template v-slot:no-option>
+      <q-item>
+        <q-item-section class="text-italic text-grey">
+          No Account Found
+        </q-item-section>
+      </q-item>
+    </template>
+    <template v-slot:option="{ itemProps, opt }">
+      <q-item v-bind="itemProps">
+        <!-- <q-item-section avatar>
+          <q-icon name="warning" color="red" />
+        </q-item-section> -->
+        <q-item-section>
+          <!-- <q-item-label>{{ (opt as any).id }}</q-item-label> -->
+          <q-item-label caption>
+            {{ (opt as any).name }} [{{ (opt as any).member_no }}] ::
+            {{ (opt as any).FatherName }}
+          </q-item-label>
+          <!-- <q-item-label caption>{{ (opt as any).member.name }}</q-item-label> -->
+        </q-item-section>
+      </q-item>
+    </template>
+  </AutoSelect>
+</template>
+
+<script setup lang="ts">
+import AutoSelect from 'components/qnatk/components/AutoSelect.vue';
+import { api } from 'boot/axios';
+import { autoCompletePropTypes } from 'components/qnatk/QnatkListDTO';
+
+defineProps({
+  ...autoCompletePropTypes,
+  baseModel: {
+    type: String,
+    default: 'Member',
+  },
+  label: {
+    type: String,
+    default: 'Member',
+  },
+  valueFieldName: {
+    type: String,
+    default: 'id',
+  },
+  labelFieldName: {
+    type: String,
+    default: 'name',
+  },
+});
+
+// const getMemberModelOptionFn = (val: string): ModelOptions => ({
+//   attributes: [props.valueFieldName, props.labelFieldName, 'FatherName'],
+//   where: {
+//     [props.labelFieldName]: { $like: `%${val}%` },
+//   },
+// });
+</script>
+
+=== StaffListPage.vue
+
+<template>
+  <q-page>
+    <q-table
+      title="Staff"
+      :columns="columns"
+      :rows="data"
+      row-key="id"
+      v-model:pagination="pagination"
+      :loading="loading"
+      @request="onRequest"
+    >
+      <template #top-right>
+        <filter-menu
+          v-model:fetch-data-function="fetchData"
+          v-model:fetch-options="fetchOptions"
+          v-model:filter-options="filterOptions"
+          v-show="!loading"
+        />
+        <NoRecordActions :api="() => api" :actions="actions" base-model="Staff">
+          <template #create="{ action, closeDialog }">
+            <add-staff-page
+              :action="action"
+              :close-dialog="closeDialog"
+              @action-completed="fetchData"
+            />
+          </template>
+        </NoRecordActions>
+        <q-btn color="primary" icon="download" @click="downloadData" />
+        <ACLComponent />
+      </template>
+      <template #body-cell-branch="props">
+        <q-td key="branch" :props="props">
+          {{ props.row.branch.name }} ({{ props.row.branch.id }})
+        </q-td>
+      </template>
+
+      <template #body-cell-actions="props">
+        <q-td key="action" :props="props">
+          <SingleRecordActions
+            :record="props.row"
+            :actions="actions"
+            base-model="Staff"
+            :api="() => api"
+            @action-completed="fetchData"
+          >
+            <template #edit="{ action, closeDialog }">
+              <edit-staff-page
+                :action="action"
+                :record="props.row"
+                :close-dialog="closeDialog"
+                :fetch-function="fetchData"
+              ></edit-staff-page>
+            </template>
+          </SingleRecordActions>
+        </q-td>
+      </template>
+    </q-table>
+  </q-page>
+</template>
+
+<script setup lang="ts">
+import { QInput, QTableColumn, QToggle } from 'quasar';
+import { useBackendDataTable } from 'src/composibles/use-backend-datatable';
+import { onMounted } from 'vue';
+import NoRecordActions from 'components/qnatk/components/NoRecordActions.vue';
+import SingleRecordActions from 'components/qnatk/components/SingleRecordActions.vue';
+import AddStaffPage from 'pages/Admin/Staff/AddStaffPage.vue';
+import EditStaffPage from './EditStaffPage.vue';
+import { api } from 'boot/axios';
+import FilterMenu from 'components/qnatk/components/FilterMenu.vue';
+import ACLComponent from 'src/components/ACLComponent.vue';
+import DateInput from 'src/components/form-inputs/DateInput.vue';
+
+interface Staff {
+  id: number;
+  name: string;
+  username: string;
+  password: string;
+  is_active: boolean;
+  AccessLevel: string;
+  branch: {
+    id: number;
+    name: string;
+  };
+}
+
+const {
+  fetchOptions,
+  data,
+  pagination,
+  loading,
+  fetchData,
+  onRequest,
+  actions,
+  downloadData,
+  callBacks,
+} = useBackendDataTable<Staff>('Staff');
+
+fetchOptions.value = {
+  attributes: [
+    'id',
+    'name',
+    'username',
+    'password',
+    'role',
+    'is_active',
+    'AccessLevel',
+    'q_role_id',
+    'permitted_branches',
+  ],
+  // where: { is_active: true },
+  include: [
+    {
+      model: 'Branch',
+      as: 'branch',
+      attributes: ['id', 'name'],
+    },
+    {
+      model: 'QRoles',
+      as: 'qRole',
+      attributes: ['id', 'name'],
+    },
+  ],
+};
+
+onMounted(() => {
+  fetchData();
+});
+
+const filterOptions: FilterOption[] = [
+  {
+    field: 'created_at',
+    component: DateInput,
+    type: 'date',
+    visible: true,
+    props: {
+      label: 'Created At',
+    },
+    operators: ['$eq', '$between'],
+    where: {
+      created_at: { $$op$$: '$$value$$' },
+    },
+  },
+  {
+    field: 'is_active',
+    component: QToggle,
+    type: 'boolean',
+    visible: true,
+    props: {
+      label: 'Active Status',
+      value: true,
+      trueValue: true,
+      leftLabel: false,
+      rightLabel: true,
+    },
+    operators: ['$eq'],
+    where: {
+      is_active: { $$op$$: '$$value$$' },
+    },
+  },
+  {
+    field: 'name',
+    component: QInput,
+    type: 'string',
+    visible: true,
+    props: {
+      label: 'Name/Username',
+    },
+    operators: ['$eq', '$contains', '$startsWith', '$endsWith'],
+    currentOperator: '$contains',
+    where: {
+      $or: {
+        name: { $$op$$: '$$value$$' },
+        username: { $$op$$: '$$value$$' },
+      },
+    },
+  },
+  {
+    includePath: 'role', // Path of include
+    field: 'role',
+    label: 'Role',
+    component: QInput,
+    type: 'text',
+    props: {
+      label: 'Role',
+    },
+    currentOperator: '$eq',
+    operators: ['$eq', '$contains', '$startsWith', '$endsWith'],
+    include: {
+      model: 'QRoles',
+      as: 'qRole',
+      attributes: ['id', 'name'],
+      where: {
+        name: { $$op$$: '$$value$$' },
+      },
+    },
+    visible: false,
+  },
+];
+
+callBacks.downloadRowIterator = (row: Staff) => {
+  return {
+    id: row.id,
+    name: row.name,
+    branch: row.branch.name,
+    username: row.username,
+    password: row.password,
+    is_active: row.is_active,
+    AccessLevel: row.AccessLevel,
+  } as unknown as Staff;
+};
+
+const columns: QTableColumn[] = [
+  {
+    name: 'Sno',
+    label: 'S. No.',
+    field: 's_no',
+    // sortable: true,
+  },
+  {
+    name: 'name',
+    label: 'Name',
+    field: 'name',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'branch',
+    label: 'Branch',
+    field: (row) => row.branch.name,
+    sortable: false,
+  },
+  {
+    name: 'username',
+    label: 'Username',
+    field: 'username',
+    sortable: false,
+  },
+  {
+    name: 'is_active',
+    label: 'Active Status',
+    field: 'is_active',
+    sortable: false,
+  },
+  {
+    name: 'role',
+    label: 'Role',
+    field: (row) => row?.qRole?.name,
+    sortable: false,
+  },
+  {
+    name: 'permitted_branches',
+    label: 'Permitted Branches',
+    field: (row) =>
+      row.permitted_branches?.map((branch) => branch?.name).join(', '),
+    sortable: false,
+  },
+  {
+    name: 'actions',
+    label: 'Actions',
+    field: 'actions',
+    sortable: false,
+    align: 'right',
+  },
+];
+</script>
+
+== EditStaffPage.vue
+
+<template>
+  <SimpleForm :init-data="record" :form-config="formConfig">
+    <template #title> <div class="text-h5">Edit Staff</div> </template>
+  </SimpleForm>
+</template>
+<script setup lang="ts">
+import RoleAutoSelect from 'components/form-inputs/RoleAutoSelect.vue';
+import SimpleForm from 'components/qnatk/components/SimpleForm.vue';
+import { FormConfig } from 'components/qnatk/form-builder-interface';
+import { api } from 'boot/axios';
+import PersonNameInput from 'components/form-inputs/PersonNameInput.vue';
+import { QInput, QSelect } from 'quasar';
+import BranchesAutoSelect from 'src/components/form-inputs/BranchesAutoSelect.vue';
+
+const props = defineProps({
+  action: {
+    type: Object,
+    required: true,
+  },
+  record: {
+    type: Object,
+    required: true,
+  },
+  closeDialog: {
+    type: Function,
+    required: true,
+  },
+  fetchFunction: {
+    type: Function,
+    required: true,
+  },
+});
+
+console.log('Props', props.record);
+const formConfig: FormConfig = {
+  api: () => api,
+  submitUrl: (data) => '/qnatk/Staff/update/' + data.id,
+  formFields: [
+    {
+      fieldId: 'name',
+      component: PersonNameInput,
+      colClass: 'col-6',
+      props: {
+        dense: true,
+        label: 'Name',
+        rules: [(val: string) => !!val || 'Name is required'],
+      },
+      dataField: 'name',
+    },
+    {
+      fieldId: 'branch_id',
+      component: BranchesAutoSelect,
+      colClass: 'col-6',
+      props: {
+        allowAllBranches: true,
+        emitValue: true,
+        dense: true,
+        label: 'Branch',
+        'lazy-rules': true,
+        rules: [(val: number) => !!val || 'Branch is required'],
+        // where: (val: string) => {
+        //   return { name: { $like: `%${val}%` }, is_active: 1 };
+        // },
+      },
+      dataField: 'branch.id',
+    },
+    {
+      fieldId: 'username',
+      component: QInput,
+      colClass: 'col-6',
+      props: {
+        dense: true,
+        label: 'User Name',
+        rules: [(val: string) => !!val || 'User Name is required'],
+      },
+      dataField: 'username',
+    },
+    {
+      fieldId: 'password',
+      component: QInput,
+      colClass: 'col-6',
+      props: {
+        dense: true,
+        label: 'Password',
+        rules: [(val: string) => !!val || 'Password is required'],
+      },
+      dataField: 'password',
+    },
+    {
+      fieldId: 'q_role_id',
+      component: RoleAutoSelect,
+      colClass: 'col-6',
+      props: {
+        emitValue: true,
+        dense: true,
+        label: 'Role',
+        'lazy-rules': true,
+        rules: [(val: number) => !!val || 'Role is required'],
+        where: (val: string) => {
+          return { name: { $like: `%${val}%` } };
+        },
+      },
+      dataField: 'q_role_id',
+    },
+    {
+      fieldId: 'permitted_branches',
+      component: BranchesAutoSelect,
+      colClass: 'col-6',
+      props: {
+        allowAllBranches: true,
+        multiple: true,
+        dense: true,
+        label: 'Permitted Branch',
+        'lazy-rules': true,
+      },
+      dataField: 'permitted_branches',
+    },
+  ],
+  callbacks: {
+    onSuccess: (data) => {
+      props.closeDialog();
+      props.fetchFunction();
+    },
+    beforeSubmit: (data) => {
+      console.log('data', data);
+      const submitData = { ...data };
+      submitData.permitted_branches = JSON.stringify(data.permitted_branches);
+      console.log('submit data', submitData);
+      return submitData;
+    },
+    onCanceled: () => {
+      props.closeDialog();
+    },
+  },
+};
+</script>
+
+<style scoped></style>
+
+======= BalanceSheetPae.vue
+
+<template>
+  <q-page>
+    <div class="row">
+      <div class="col-10">
+        <!-- <h5>Member Search Report</h5> -->
+      </div>
+      <div class="col-2 text-right">
+        <ACLComponent />
+      </div>
+    </div>
+    <q-card class="q-mb-sm">
+      <q-form @submit.prevent="getBalanceSheet" class="q-gutter-md">
+        <q-card-section>
+          <div class="row q-col-gutter-md">
+            <div class="col-3">
+              <DateInput
+                label="From Date"
+                v-model="values.where.from_date"
+                dense
+              />
+            </div>
+            <div class="col-3">
+              <DateInput label="To Date" v-model="values.where.to_date" dense />
+            </div>
+
+            <div class="col-3">
+              <BranchesAutoSelect
+                dense
+                v-model="values.where.branch_id"
+                label="Branch"
+                emit-value
+              />
+            </div>
+            <div class="col-2">
+              <q-btn color="primary" label="Get BalanceSheet" type="submit" />
+            </div>
+          </div>
+        </q-card-section>
+      </q-form>
+    </q-card>
+    <div class="row">
+      <div class="col-6">
+        <q-table
+          title="Liabilities"
+          :rows="balanceSheetData.liabilities"
+          row-key="name"
+          :columns="tableColumns"
+          flat
+          bordered
+          dense
+          hide-pagination
+          :loading="isLoading"
+          :rows-per-page-options="[0]"
+        >
+          <template v-slot:header="props">
+            <q-tr :props="props">
+              <q-th auto-width />
+              <q-th v-for="col in props.cols" :key="col.name" :props="props">
+                {{ col.label }}
+              </q-th>
+            </q-tr>
+          </template>
+
+          <template v-slot:body="props">
+            <q-tr :props="props">
+              <q-td auto-width>
+                <q-btn
+                  size="sm"
+                  color="accent"
+                  round
+                  dense
+                  @click="props.expand = !props.expand"
+                  :icon="props.expand ? 'remove' : 'add'"
+                />
+              </q-td>
+              <q-td v-for="col in props.cols" :key="col.name" :props="props">
+                {{ col.value }}
+              </q-td>
+            </q-tr>
+            <q-tr v-show="props.expand" :props="props">
+              <q-td colspan="100%">
+                <div class="text-left">
+                  <BalanceSheetSchemeGroup
+                    :branch-id="values.where.branch_id"
+                    v-if="props.expand && props.row.show_sub == 'SchemeGroup'"
+                    :balance-sheet-id="props.row.id"
+                    :from-date="values.where.from_date"
+                    :to-date="values.where.to_date"
+                  />
+                </div>
+              </q-td>
+            </q-tr>
+          </template>
+        </q-table>
+      </div>
+
+      <div class="col-6">
+        <q-table
+          title="Assets"
+          :rows="balanceSheetData.assets"
+          row-key="name"
+          :columns="tableColumns"
+          flat
+          dense
+          bordered
+          hide-pagination
+          :loading="isLoading"
+          :rows-per-page-options="[0]"
+        >
+          <template v-slot:header="props">
+            <q-tr :props="props">
+              <q-th auto-width />
+              <q-th v-for="col in props.cols" :key="col.name" :props="props">
+                {{ col.label }}
+              </q-th>
+            </q-tr>
+          </template>
+
+          <template v-slot:body="props">
+            <q-tr :props="props">
+              <q-td auto-width>
+                <q-btn
+                  size="sm"
+                  color="accent"
+                  round
+                  dense
+                  @click="props.expand = !props.expand"
+                  :icon="props.expand ? 'remove' : 'add'"
+                />
+              </q-td>
+              <q-td v-for="col in props.cols" :key="col.name" :props="props">
+                {{ col.value }}
+              </q-td>
+            </q-tr>
+            <q-tr v-show="props.expand" :props="props">
+              <q-td colspan="100%">
+                <div class="text-left">
+                  <BalanceSheetSchemeGroup
+                    :branch-id="values.where.branch_id"
+                    v-if="props.expand && props.row.show_sub == 'SchemeGroup'"
+                    :balance-sheet-id="props.row.id"
+                    :from-date="values.where.from_date"
+                    :to-date="values.where.to_date"
+                  />
+                </div>
+              </q-td>
+            </q-tr>
+          </template>
+        </q-table>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-6 text-right q-mt-md">
+        <strong
+          >Total Liabilities:
+          {{ toCurrency(balanceSheetData.totalLiabilities) }}</strong
+        >
+        <div v-if="balanceSheetData.difference > 0">
+          <strong class="text-negative"
+            >Difference: {{ toCurrency(balanceSheetData.difference) }}</strong
+          >
+        </div>
+      </div>
+      <div class="col-6 text-right q-mt-md">
+        <strong
+          >Total Assets: {{ toCurrency(balanceSheetData.totalAssets) }}</strong
+        >
+        <div v-if="balanceSheetData.difference < 0">
+          <strong class="text-negative"
+            >Difference: {{ toCurrency(-balanceSheetData.difference) }}</strong
+          >
+        </div>
+      </div>
+    </div>
+  </q-page>
+</template>
+<script setup lang="ts">
+import { MyDate } from 'src/composibles/MyDate';
+import { useBackendForm } from 'src/composibles/use-backend-form';
+import { useUserStore } from 'stores/user-store';
+import DateInput from 'components/form-inputs/DateInput.vue';
+import { computed } from 'vue';
+import BalanceSheetSchemeGroup from 'components/Digging/BalanceSheetSchemeGroup.vue';
+import { QTableColumn } from 'quasar';
+import { toCurrency } from 'src/composibles/use-currency';
+import { ModelOptions } from 'components/qnatk/QnatkListDTO';
+import BranchesAutoSelect from 'components/form-inputs/BranchesAutoSelect.vue';
+import ACLComponent from 'src/components/ACLComponent.vue';
+
+const tableColumns: QTableColumn[] = [
+  { name: 'name', label: 'Name', field: 'name', align: 'left', sortable: true },
+  {
+    name: 'balance',
+    label: 'Balance',
+    field: 'balance',
+    format: (val) => toCurrency(val, false),
+    align: 'right',
+    classes: 'text-weight-bold',
+    sortable: true,
+  },
+];
+const userStore = useUserStore();
+const financialYear = new MyDate(
+  userStore.user.workingDate
+).getFinancialYear() as {
+  startDate: string;
+  endDate: string;
+};
+const { validateAndSubmit, isLoading, values, callbacks, responseData } =
+  useBackendForm('/qnatk/BalanceSheet/list/RunBalanceSheet', {
+    where: {
+      branch_id: userStore.user.branch_id,
+      from_date: financialYear.startDate,
+      to_date: financialYear.endDate,
+    },
+  } as ModelOptions);
+
+callbacks.onSuccess = () => {};
+
+const selectedBranchId = computed(() => {
+  return values.value.where.branch_id ?? userStore.user.branch_id;
+});
+
+const getBalanceSheet = () => {
+  validateAndSubmit(false);
+};
+
+interface Item {
+  subtract_from: string;
+  totalCr?: number;
+  totalDr?: number;
+  is_pandl: boolean;
+  name: string;
+  show_sub: boolean;
+  id: number;
+  positive_side: string;
+}
+
+const balanceSheetData = computed(() => {
+  const assets = [];
+  const liabilities = [];
+  let totalIncome = 0;
+  let totalExpenses = 0;
+
+  (responseData.value as Item[]).forEach((item) => {
+    let balance;
+    if (item.subtract_from === 'Cr') {
+      balance = (item.totalCr || 0) - (item.totalDr || 0);
+    } else {
+      balance = (item.totalDr || 0) - (item.totalCr || 0);
+    }
+    const formattedBalance = parseFloat(Math.abs(balance).toFixed(2)); // Format balance with 2 decimal places
+
+    if (item.is_pandl) {
+      if (item.name === 'Income') {
+        totalIncome += balance;
+      } else if (item.name === 'Expenses') {
+        totalExpenses += balance;
+      }
+    } else {
+      const entry = {
+        name: item.name,
+        balance: formattedBalance,
+        show_sub: item.show_sub,
+        id: item.id,
+      };
+
+      if (
+        (balance >= 0 && item.positive_side === 'LT') ||
+        (balance < 0 && item.positive_side === 'RT')
+      ) {
+        liabilities.push(entry);
+      } else {
+        assets.push(entry);
+      }
+    }
+  });
+
+  const profitOrLoss = totalIncome - totalExpenses;
+  const formattedProfitOrLoss = parseFloat(Math.abs(profitOrLoss).toFixed(2)); // Format profit or loss with 2 decimal places
+  const profitOrLossEntry = {
+    name: profitOrLoss >= 0 ? 'Profit' : 'Loss',
+    balance: formattedProfitOrLoss,
+  };
+
+  // Place Profit or Loss in the liabilities if it's a profit (positive), else in assets
+  if (profitOrLoss >= 0) {
+    liabilities.push(profitOrLossEntry);
+  } else {
+    assets.push(profitOrLossEntry);
+  }
+
+  const totalAssets = assets.reduce((acc, item) => acc + item.balance, 0);
+  const totalLiabilities = liabilities.reduce(
+    (acc, item) => acc + item.balance,
+    0
+  );
+
+  const difference = totalLiabilities - totalAssets;
+
+  return { assets, liabilities, totalAssets, totalLiabilities, difference };
+});
+</script>
+
+<style scoped></style>
+
+=== file to show how to use lacHookName
+<template>
+  <q-table
+    title="Bank Report"
+    :columns="columns"
+    :rows="data"
+    row-key="id"
+    :loading="loading"
+    @request="onRequest"
+    :rows-per-page-options="[0]"
+    wrap-cells
+  >
+    <template #bottom-row>
+      <q-td></q-td>
+      <q-td></q-td>
+      <q-td><strong>Total: </strong></q-td>
+      <q-td>
+        <div class="q-pr-md">
+          <strong>{{ totalOpeningBalance }}</strong>
+        </div>
+      </q-td>
+      <q-td>
+        <div class="q-pr-md">
+          <strong>{{ totalReceivedBalance }}</strong>
+        </div>
+      </q-td>
+      <q-td>
+        <div class="q-pr-md">
+          <strong>{{ totalPaymentBalance }}</strong>
+        </div>
+      </q-td>
+      <q-td>
+        <div class="text-left q-pr-md">
+          <strong>{{ totalNetBalance }}</strong>
+        </div>
+      </q-td>
+    </template>
+  </q-table>
+</template>
+
+<script setup lang="ts">
+import { QTableColumn } from 'quasar';
+import { useBackendDataTable } from 'src/composibles/use-backend-datatable';
+import { computed, onMounted } from 'vue';
+import NoRecordActions from 'components/qnatk/components/NoRecordActions.vue';
+import SingleRecordActions from 'components/qnatk/components/SingleRecordActions.vue';
+import { api } from 'boot/axios';
+import { useDate } from 'src/composibles/use-date';
+import { toCurrency } from 'src/composibles/use-currency';
+import { ModelOptions } from 'components/qnatk/QnatkListDTO';
+import BankAndOdAndCashAccountReport from './BankAndCashAndOdAccountReport.vue';
+const {
+  fetchOptions,
+  data,
+  loading,
+  fetchData,
+  onRequest,
+  responseData,
+  lacHookName,
+} = useBackendDataTable('Account');
+
+lacHookName.value = 'BankCashODReport';
+
+const { today } = useDate();
+
+fetchOptions.value = {
+  group: 'Bank Accounts',
+} as ModelOptions;
+
+onMounted(() => {
+  fetchData();
+});
+
+const calculateOpeningBalance = (account) => {
+  const openingCr =
+    parseFloat(account.OpeningBalanceCr) +
+    parseFloat(account.SumCrTillFromDate);
+  const openingDr =
+    parseFloat(account.OpeningBalanceDr) +
+    parseFloat(account.SumDrTillFromDate);
+  const balance = openingCr - openingDr;
+  return balance >= 0
+    ? `${toCurrency(balance)} Cr`
+    : `${toCurrency(-balance)} Dr`;
+};
+
+const totalOpeningBalance = computed(() => {
+  let totalOpeningCr = 0;
+  let totalOpeningDr = 0;
+
+  data.value.forEach((account) => {
+    const openingCr =
+      parseFloat(account.OpeningBalanceCr) +
+      parseFloat(account.SumCrTillFromDate);
+    const openingDr =
+      parseFloat(account.OpeningBalanceDr) +
+      parseFloat(account.SumDrTillFromDate);
+    // const finalCr = openingCr + parseFloat(account.SumCrBetweenDates);
+    // const finalDr = openingDr + parseFloat(account.SumDrBetweenDates);
+    totalOpeningCr += openingCr;
+    totalOpeningDr += openingDr;
+  });
+
+  const netOpeningBalance = totalOpeningCr - totalOpeningDr;
+  return netOpeningBalance >= 0
+    ? `${toCurrency(netOpeningBalance)} Cr`
+    : `${toCurrency(-netOpeningBalance)} Dr`;
+});
+
+const calculateFinalBalance = (account) => {
+  const openingCr =
+    parseFloat(account.OpeningBalanceCr) +
+    parseFloat(account.SumCrTillFromDate);
+  const openingDr =
+    parseFloat(account.OpeningBalanceDr) +
+    parseFloat(account.SumDrTillFromDate);
+  const finalCr = openingCr + parseFloat(account.SumCrBetweenDates);
+  const finalDr = openingDr + parseFloat(account.SumDrBetweenDates);
+  const balance = finalCr - finalDr;
+  return balance >= 0
+    ? `${toCurrency(balance)} Cr`
+    : `${toCurrency(-balance)} Dr`;
+};
+
+const totalNetBalance = computed(() => {
+  let totalCr = 0;
+  let totalDr = 0;
+
+  data.value.forEach((account) => {
+    const openingCr =
+      parseFloat(account.OpeningBalanceCr) +
+      parseFloat(account.SumCrTillFromDate);
+    const openingDr =
+      parseFloat(account.OpeningBalanceDr) +
+      parseFloat(account.SumDrTillFromDate);
+    const finalCr = openingCr + parseFloat(account.SumCrBetweenDates);
+    const finalDr = openingDr + parseFloat(account.SumDrBetweenDates);
+    totalCr += finalCr;
+    totalDr += finalDr;
+  });
+
+  const netBalance = totalCr - totalDr;
+  return netBalance >= 0
+    ? `${toCurrency(netBalance)} Cr`
+    : `${toCurrency(-netBalance)} Dr`;
+});
+
+const totalReceivedBalance = computed(() => {
+  let todayTotalReceivedDr = 0;
+
+  data.value.forEach((account) => {
+    todayTotalReceivedDr += account.SumDrBetweenDates;
+  });
+
+  const netReceivedBalance = toCurrency(todayTotalReceivedDr);
+  return netReceivedBalance;
+});
+const totalPaymentBalance = computed(() => {
+  let todayTotalpaymentCr = 0;
+
+  data.value.forEach((account) => {
+    todayTotalpaymentCr += account.SumCrBetweenDates;
+  });
+
+  const netPaymentBalance = toCurrency(todayTotalpaymentCr);
+  return netPaymentBalance;
+});
+
+// Calculate total opening balance
+
+const columns: QTableColumn[] = [
+  {
+    name: 'sno',
+    label: 'S No',
+    field: 's_no',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'AccountNumber',
+    label: 'Account Number',
+    field: 'AccountNumber',
+    sortable: true,
+    align: 'left',
+  },
+  {
+    name: 'bank_ifsc',
+    label: 'IFSC Code',
+    align: 'left',
+    field: 'bank_ifsc',
+    sortable: true,
+  },
+
+  {
+    name: 'openingBalance',
+    label: 'Opening Balance',
+    field: (row) => calculateOpeningBalance(row),
+    sortable: false,
+    align: 'left',
+  },
+  {
+    name: 'SumDrBetweenDates',
+    label: 'Today Received',
+    field: 'SumDrBetweenDates',
+    format: (val) => (val !== 0 ? toCurrency(val) : val),
+    sortable: false,
+    align: 'left',
+  },
+  {
+    name: 'SumCrBetweenDates',
+    label: 'Today Payment',
+    field: 'SumCrBetweenDates',
+    format: (val) => (val !== 0 ? toCurrency(val) : val),
+    sortable: false,
+    align: 'left',
+  },
+  // {
+  //   name: 'finalBalance',
+  //   label: 'Final Balance',
+  //   field: (row) => calculateFinalBalance(row),
+  //   sortable: false,
+  //   align: 'left',
+  // },
+  {
+    name: 'finalBalance',
+    label: 'Final Balance',
+    field: (row) => calculateFinalBalance(row),
+    sortable: false,
+    align: 'left',
+    classes: (row) => {
+      const balance = calculateFinalBalance(row);
+      return balance.includes('Cr') ? 'text-red' : 'text-black';
+    },
+  },
+];
+</script>
+
+=======
+=======
+
+Based on the above information and provided framework details. Help user generate prefect most user readable code when asked as per his query
