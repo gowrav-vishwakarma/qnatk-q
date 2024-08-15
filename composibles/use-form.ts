@@ -11,12 +11,13 @@ type ErrorResponse = {
   errors: FormErrors;
 };
 
-interface ResponseValidationOptions {
+class ResponseValidationOptions {
   filterExtraFields?: boolean;
   warnOnExtraFields?: boolean;
   throwOnExtraFields?: boolean;
   validatorOptions?: ValidatorOptions;
   onValidationError?: (errors: ValidationError[]) => void;
+  validationFailed?: 'warn' | 'throw' | 'silent' = 'warn';
 }
 export function useForm<ResponseFormat extends Record<string, any>>(
   api: AxiosInstance, // Add the AxiosInstance parameter
@@ -95,6 +96,7 @@ export function useForm<ResponseFormat extends Record<string, any>>(
       throwOnExtraFields = false,
       validatorOptions = {},
       onValidationError,
+      validationFailed = 'warn',
     } = options;
 
     const dtoInstance = plainToInstance(DTOClass, data, {
@@ -107,7 +109,16 @@ export function useForm<ResponseFormat extends Record<string, any>>(
       if (onValidationError) {
         onValidationError(validationErrors);
       } else {
-        throw validationErrors;
+        switch (validationFailed) {
+          case 'warn':
+            console.warn('Validation failed:', validationErrors);
+            break;
+          case 'throw':
+            throw validationErrors;
+          case 'silent':
+            // Do nothing
+            break;
+        }
       }
     }
 
