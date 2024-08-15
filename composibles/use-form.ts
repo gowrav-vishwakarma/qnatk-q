@@ -1,7 +1,9 @@
-import { reactive, ref } from 'vue';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { reactive, ref, UnwrapRef } from 'vue';
 import { useQuasar } from 'quasar';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { validate } from 'class-validator';
+import { validate, ValidationError, ValidatorOptions } from 'class-validator';
 import { instanceToPlain, plainToInstance } from 'class-transformer';
 
 type FormErrors = Record<string, string[]>;
@@ -9,13 +11,20 @@ type ErrorResponse = {
   errors: FormErrors;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface ResponseValidationOptions {
+  filterExtraFields?: boolean;
+  warnOnExtraFields?: boolean;
+  throwOnExtraFields?: boolean;
+  validatorOptions?: ValidatorOptions;
+  onValidationError?: (errors: ValidationError[]) => void;
+}
 export function useForm<ResponseFormat extends Record<string, any>>(
   api: AxiosInstance, // Add the AxiosInstance parameter
   initialUrl: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   defaultValues: Record<string, any>,
-  METHOD: 'post' | 'get' = 'post'
+  METHOD: 'post' | 'get' = 'post',
+  DTOClass?: new () => ResponseFormat,
+  responseValidationOptions: ResponseValidationOptions = {}
 ) {
   const $q = useQuasar();
   const values = ref({ ...defaultValues });
@@ -31,13 +40,11 @@ export function useForm<ResponseFormat extends Record<string, any>>(
   // Define the callback functions in a reactive object
   const callbacks = reactive({
     // Define a default implementation for onSuccess
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSuccess: (data: any): any | Promise<any> => {
       $q.notify({ color: 'positive', message: 'Form submitted successfully!' });
       return data; // Return the input parameter
     },
     // Define a default implementation for onError
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: async (error: any): Promise<never> => {
       if (axios.isAxiosError(error) && error.response) {
         const errorResponse = error.response.data as ErrorResponse;
@@ -76,21 +83,51 @@ export function useForm<ResponseFormat extends Record<string, any>>(
     },
   });
 
-  async function validateResponse(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Separate validateResponse function
+  async function validateResponse<T extends object>(
     data: any,
-    DTOClass: new () => ResponseFormat
-  ): Promise<ResponseFormat> {
-    if (!DTOClass) return data; // If no DTO class is provided, return the data as is
+    DTOClass: new () => T,
+    options: ResponseValidationOptions = {}
+  ): Promise<T> {
+    const {
+      filterExtraFields = false,
+      warnOnExtraFields = false,
+      throwOnExtraFields = false,
+      validatorOptions = {},
+      onValidationError,
+    } = options;
 
-    const dtoInstance = plainToInstance(DTOClass, data);
-    const validationErrors = await validate(dtoInstance);
+    const dtoInstance = plainToInstance(DTOClass, data, {
+      excludeExtraneousValues: filterExtraFields,
+    });
+
+    const validationErrors = await validate(dtoInstance, validatorOptions);
 
     if (validationErrors.length > 0) {
-      throw validationErrors; // Throw validation errors
+      if (onValidationError) {
+        onValidationError(validationErrors);
+      } else {
+        throw validationErrors;
+      }
     }
 
-    return instanceToPlain(dtoInstance) as ResponseFormat; // Return the transformed and validated data
+    const transformedData = instanceToPlain(dtoInstance) as T;
+
+    if (!filterExtraFields) {
+      const extraFields = Object.keys(data).filter(
+        (key) => !(key in transformedData)
+      );
+      if (extraFields.length > 0) {
+        if (warnOnExtraFields) {
+          console.warn('Extra fields detected:', extraFields);
+        }
+        if (throwOnExtraFields) {
+          throw new Error(`Extra fields detected: ${extraFields.join(', ')}`);
+        }
+      }
+    }
+
+    return transformedData;
   }
 
   // Function to update the URL
@@ -102,12 +139,10 @@ export function useForm<ResponseFormat extends Record<string, any>>(
     apiInstance.value = newApi;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isFile = (value: any): value is File => {
     return value instanceof File;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const containsFiles = (obj: any): boolean => {
     if (isFile(obj)) {
       return true;
@@ -130,7 +165,6 @@ export function useForm<ResponseFormat extends Record<string, any>>(
       data_to_submit = values.value;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let payload: FormData | Record<string, any>;
     const hasFiles = containsFiles(values.value);
 
@@ -174,6 +208,26 @@ export function useForm<ResponseFormat extends Record<string, any>>(
         payload,
         config
       );
+
+      if (DTOClass) {
+        try {
+          responseData.value = (await validateResponse(
+            response.data,
+            DTOClass,
+            responseValidationOptions
+          )) as UnwrapRef<ResponseFormat>;
+        } catch (validationError) {
+          if (responseValidationOptions.onValidationError) {
+            responseValidationOptions.onValidationError(
+              validationError as ValidationError[]
+            );
+          } else {
+            throw validationError;
+          }
+        }
+      } else {
+        responseData.value = response.data;
+      }
       responseData.value = response.data;
       if (resetForm) values.value = { ...defaultValues };
       await callbacks.onSuccess(response.data);
