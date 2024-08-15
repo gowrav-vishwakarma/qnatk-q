@@ -12,6 +12,7 @@ type ErrorResponse = {
 };
 
 class ResponseValidationOptions {
+  expectArray?: boolean;
   filterExtraFields?: boolean;
   warnOnExtraFields?: boolean;
   throwOnExtraFields?: boolean;
@@ -46,7 +47,7 @@ export function useForm<ResponseFormat extends Record<string, any>>(
       return data; // Return the input parameter
     },
     // Define a default implementation for onError
-    onError: async (error: any): Promise<never> => {
+    onError: async (error: any): Promise<void> => {
       if (axios.isAxiosError(error) && error.response) {
         const errorResponse = error.response.data as ErrorResponse;
         if (errorResponse && errorResponse.errors) {
@@ -89,8 +90,9 @@ export function useForm<ResponseFormat extends Record<string, any>>(
     data: any,
     DTOClass: new () => T,
     options: ResponseValidationOptions = {}
-  ): Promise<T> {
+  ): Promise<T | T[]> {
     const {
+      expectArray,
       filterExtraFields = false,
       warnOnExtraFields = false,
       throwOnExtraFields = false,
@@ -99,47 +101,95 @@ export function useForm<ResponseFormat extends Record<string, any>>(
       validationFailed = 'warn',
     } = options;
 
-    const dtoInstance = plainToInstance(DTOClass, data, {
-      excludeExtraneousValues: filterExtraFields,
-    });
+    // Determine if we're expecting an array
+    const isExpectingArray =
+      expectArray !== undefined ? expectArray : Array.isArray(new DTOClass());
+    const isResponseArray = Array.isArray(data);
 
-    const validationErrors = await validate(dtoInstance, validatorOptions);
+    if (isExpectingArray !== isResponseArray) {
+      const errorMessage = isExpectingArray
+        ? 'Expected an array, but received a single object.'
+        : 'Expected a single object, but received an array.';
 
-    if (validationErrors.length > 0) {
-      if (onValidationError) {
-        onValidationError(validationErrors);
-      } else {
-        switch (validationFailed) {
-          case 'warn':
-            console.warn('Validation failed:', validationErrors);
-            break;
-          case 'throw':
-            console.error('Validation failed:', validationErrors);
-            throw validationErrors;
-          case 'silent':
-            // Do nothing
-            break;
-        }
-      }
+      console.error('Response type mismatch:', errorMessage);
+      throw new Error(errorMessage);
     }
 
-    const transformedData = instanceToPlain(dtoInstance) as T;
+    const validateSingle = async (item: any): Promise<T> => {
+      const dtoInstance = plainToInstance(DTOClass, item, {
+        excludeExtraneousValues: filterExtraFields,
+      });
 
-    if (!filterExtraFields) {
-      const extraFields = Object.keys(data).filter(
-        (key) => !(key in transformedData)
-      );
-      if (extraFields.length > 0) {
-        if (warnOnExtraFields) {
-          console.warn('Extra fields detected:', extraFields);
-        }
-        if (throwOnExtraFields) {
-          throw new Error(`Extra fields detected: ${extraFields.join(', ')}`);
-        }
+      const validationErrors = await validate(dtoInstance, validatorOptions);
+
+      if (validationErrors.length > 0) {
+        handleValidationErrors(
+          validationErrors,
+          validationFailed,
+          onValidationError
+        );
+      }
+
+      const transformedData = instanceToPlain(dtoInstance) as T;
+
+      if (!filterExtraFields) {
+        checkExtraFields(
+          item,
+          transformedData,
+          warnOnExtraFields,
+          throwOnExtraFields
+        );
+      }
+
+      return transformedData;
+    };
+
+    if (isResponseArray) {
+      return Promise.all(data.map(validateSingle));
+    } else {
+      return validateSingle(data);
+    }
+  }
+
+  function handleValidationErrors(
+    validationErrors: ValidationError[],
+    validationFailed: 'warn' | 'throw' | 'silent',
+    onValidationError?: (errors: ValidationError[]) => void
+  ) {
+    if (onValidationError) {
+      onValidationError(validationErrors);
+    } else {
+      switch (validationFailed) {
+        case 'warn':
+          console.warn('Validation failed:', validationErrors);
+          break;
+        case 'throw':
+          console.error('Validation failed:', validationErrors);
+          throw validationErrors;
+        case 'silent':
+          // Do nothing
+          break;
       }
     }
+  }
 
-    return transformedData;
+  function checkExtraFields(
+    originalData: any,
+    transformedData: any,
+    warnOnExtraFields: boolean,
+    throwOnExtraFields: boolean
+  ) {
+    const extraFields = Object.keys(originalData).filter(
+      (key) => !(key in transformedData)
+    );
+    if (extraFields.length > 0) {
+      if (warnOnExtraFields) {
+        console.warn('Extra fields detected:', extraFields);
+      }
+      if (throwOnExtraFields) {
+        throw new Error(`Extra fields detected: ${extraFields.join(', ')}`);
+      }
+    }
   }
 
   // Function to update the URL
@@ -227,19 +277,31 @@ export function useForm<ResponseFormat extends Record<string, any>>(
             response.data,
             DTOClass,
             responseValidationOptions
-          )) as UnwrapRef<ResponseFormat>;
+          )) as UnwrapRef<ResponseFormat | ResponseFormat[]>;
         } catch (validationError) {
-          if (responseValidationOptions.onValidationError) {
+          if (
+            validationError instanceof Error &&
+            validationError.message.includes('Response type mismatch')
+          ) {
+            console.error('Response type mismatch:', validationError.message);
+            $q.notify({
+              color: 'negative',
+              message:
+                'Unexpected response format. Please check the console for details.',
+            });
+          } else if (responseValidationOptions.onValidationError) {
             responseValidationOptions.onValidationError(
               validationError as ValidationError[]
             );
           } else {
             throw validationError;
           }
+          return; // Exit the function early
         }
       } else {
         responseData.value = response.data;
       }
+
       responseData.value = response.data;
       if (resetForm) values.value = { ...defaultValues };
       await callbacks.onSuccess(response.data);
