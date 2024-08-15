@@ -114,6 +114,7 @@ export function useForm<ResponseFormat extends Record<string, any>>(
             console.warn('Validation failed:', validationErrors);
             break;
           case 'throw':
+            console.error('Validation failed:', validationErrors);
             throw validationErrors;
           case 'silent':
             // Do nothing
