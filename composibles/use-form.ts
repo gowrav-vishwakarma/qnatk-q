@@ -302,7 +302,6 @@ export function useForm<ResponseFormat extends Record<string, any>>(
         responseData.value = response.data;
       }
 
-      responseData.value = response.data;
       if (resetForm) values.value = { ...defaultValues };
       await callbacks.onSuccess(response.data);
     } catch (error) {
