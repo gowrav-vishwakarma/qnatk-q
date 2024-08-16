@@ -192,12 +192,15 @@ const applyFilter = (colName: string) => {
 };
 
 const applyAllFilters = () => {
+  // Start with a fresh copy of the initial fetch options
   let updatedFetchOptions = cloneDeep(initialFetchOptions.value);
 
+  // Ensure the where clause exists
   if (!updatedFetchOptions.where) {
     updatedFetchOptions.where = {};
   }
 
+  // Iterate through all filters
   Object.entries(filters.value).forEach(([colName, filter]) => {
     if (filter.active) {
       const option = getFilterOption(colName);
@@ -209,7 +212,7 @@ const applyAllFilters = () => {
           option.type
         );
 
-        // Merge the new condition into the root where clause
+        // Merge the new condition with the existing ones
         Object.assign(updatedFetchOptions.where, condition);
       }
 
@@ -225,18 +228,19 @@ const applyAllFilters = () => {
     }
   });
 
-  // Remove any empty conditions
+  // Clean up any empty conditions
   Object.keys(updatedFetchOptions.where).forEach((key) => {
     if (Object.keys(updatedFetchOptions.where[key]).length === 0) {
       delete updatedFetchOptions.where[key];
     }
   });
 
-  // If where clause is empty after filtering, remove it
+  // If no conditions remain, remove the where clause entirely
   if (Object.keys(updatedFetchOptions.where).length === 0) {
     delete updatedFetchOptions.where;
   }
 
+  // Emit the updated fetch options to trigger data fetch
   emit('update:fetchOptions', updatedFetchOptions);
   props.fetchDataFunction();
 };
@@ -244,6 +248,7 @@ const applyAllFilters = () => {
 const clearFilter = (colName: string) => {
   const option = getFilterOption(colName);
   if (option) {
+    // Reset the filter for the column
     const operator = option.operators[0];
     const value =
       option.type === 'date' && operator === '$between'
@@ -251,6 +256,13 @@ const clearFilter = (colName: string) => {
         : '';
     filters.value[colName] = { operator, value, active: false };
 
+    // Remove the specific condition from the where clause
+    let updatedFetchOptions = cloneDeep(initialFetchOptions.value);
+    if (updatedFetchOptions.where) {
+      delete updatedFetchOptions.where[colName]; // Remove the condition related to the cleared filter
+    }
+
+    // Update the filter options without the cleared filter
     const updatedFilterOptions = props.filterOptions.map((opt) =>
       opt.field === colName
         ? { ...opt, currentOperator: operator, defaultValues: undefined }
@@ -258,6 +270,7 @@ const clearFilter = (colName: string) => {
     );
     emit('update:filterOptions', updatedFilterOptions);
 
+    // Apply all remaining filters
     applyAllFilters();
   }
 };
