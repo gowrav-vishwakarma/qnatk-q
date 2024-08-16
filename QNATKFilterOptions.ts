@@ -9,6 +9,7 @@ type Operator =
   | '$contains'
   | '$startsWith'
   | '$endsWith'
+  | '$in'
   | '$like';
 
 interface FilterOption {
