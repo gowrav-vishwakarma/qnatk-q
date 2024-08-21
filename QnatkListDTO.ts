@@ -1,4 +1,4 @@
-import { PropType } from 'vue';
+import { PropType } from "vue";
 
 export interface ScopeOption {
   name: string;
@@ -41,7 +41,7 @@ export interface ModelOptions {
   attributes?: Attribute[];
   include?: (ModelInclude | Record<string, unknown>)[];
   where?: ModelWhere;
-  order?: string | string[] | [string, 'ASC' | 'DESC'][];
+  order?: string | string[] | [string, "ASC" | "DESC"][];
   limit?: number;
   offset?: number;
   subQuery?: boolean;
@@ -51,6 +51,7 @@ export interface ModelOptions {
 
 export interface ModelInclude {
   model: string;
+  as?: string;
   attributes?: Attribute[];
   where?: ModelWhere;
   required?: boolean;
@@ -144,11 +145,11 @@ export const autoCompletePropTypes = {
   >,
   valueFieldName: {
     type: String,
-    default: 'id',
+    default: "id",
   },
   labelFieldName: {
     type: String,
-    default: 'name',
+    default: "name",
   },
   error: Boolean,
   errorMessage: String,
