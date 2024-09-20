@@ -144,6 +144,10 @@ const props = defineProps({
     type: Object as () => ActionListDTO,
     required: true,
   },
+  visibleActions: {
+    type: Array as () => string[],
+    default: () => [],
+  },
   records: {
     type: Object,
     required: true,
@@ -196,7 +200,13 @@ const checkCondition = (action: ActionStructure, selectedRecords: any[]) => {
 };
 
 const multiRecordActions = computed(() => {
-  return Object.keys(props.actions)
+  const actionKeys = Object.keys(props.actions);
+  const filteredKeys =
+    props.visibleActions.length > 0
+      ? actionKeys.filter((key) => props.visibleActions.includes(key))
+      : actionKeys;
+
+    return filteredKeys
     .filter((key) => props.actions[key].mode === 'MultiRecord')
     .map((key) => props.actions[key]);
 });
