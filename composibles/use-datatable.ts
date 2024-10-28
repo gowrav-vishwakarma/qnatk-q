@@ -5,7 +5,7 @@ import {
   TransformedSortOption,
 } from '../QnatkListDTO';
 import { exportFile, useQuasar } from 'quasar';
-import { AxiosInstance } from 'axios';
+import { AxiosInstance, AxiosResponse } from 'axios';
 import { ActionListDTO } from '../ActionDTO';
 
 interface RequestProps {
@@ -34,6 +34,7 @@ export function useDatatable<T>(
   // Default to no transformation)
   const data = ref<T[]>([]);
   const responseData = ref<T[]>([]);
+  const fullResponse = ref<AxiosResponse | null>(null);
   const actions = ref<ActionListDTO>({});
   const loading = ref(false);
   const error = ref(false);
@@ -137,6 +138,8 @@ export function useDatatable<T>(
           (lacHookName.value ? '/' + lacHookName.value : ''),
         effectiveModelOptions
       );
+
+      fullResponse.value = response; // Store the full response
 
       data.value = response.data.rows;
       data.value = processRows(
@@ -278,5 +281,6 @@ export function useDatatable<T>(
     downloadData,
     lacHookName,
     changeBaseModel,
+    fullResponse, // Add this to the returned object
   };
 }
