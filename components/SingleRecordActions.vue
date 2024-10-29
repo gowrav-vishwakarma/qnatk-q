@@ -139,7 +139,7 @@
       icon="more_vert"
       v-if="menuActions.length"
     >
-      Actions
+      {{ menuLabel }}
 
       <q-menu offset-y>
         <q-list dense separator>
@@ -344,6 +344,10 @@ const props = defineProps({
     type: String,
     default: "/qnatk",
   },
+  menuLabel: {
+    type: String,
+    default: "Actions",
+  },
 });
 
 const toggleMenuActions = ref(false);
@@ -387,7 +391,17 @@ const singleRecordActions = computed(() => {
       : actionKeys;
 
   return filteredKeys
-    .filter((key) => props.actions[key].mode === "SingleRecord")
+    .filter((key) => {
+      // props.actionUnavailableBehavior === 'hide'
+      //       ? visibleActionsArray.includes(key) && checkCondition(props.actions[key], props.record)
+      //   : visibleActionsArray.includes(key)
+      return (
+        props.actions[key].mode === "SingleRecord" &&
+        (props.actionUnavailableBehavior === "hide"
+          ? checkCondition(props.actions[key], props.record)
+          : true)
+      );
+    })
     .map((key) => {
       const actionData = props.actions[key];
       if (visibleActionsIsArray && !actionData["displayMode"])
