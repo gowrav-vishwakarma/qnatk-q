@@ -11,28 +11,28 @@ import {
   ValidatorConstraintInterface,
   registerDecorator,
   ValidationOptions,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+} from "class-validator";
+import { Type } from "class-transformer";
 
-@ValidatorConstraint({ name: 'isStringOrObject', async: false })
+@ValidatorConstraint({ name: "isStringOrObject", async: false })
 export class IsStringOrObjectConstraint
   implements ValidatorConstraintInterface
 {
   validate(value: unknown, args: ValidationArguments) {
     return (
-      typeof value === 'string' || (typeof value === 'object' && value !== null)
+      typeof value === "string" || (typeof value === "object" && value !== null)
     );
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'icon must be a string or an object';
+    return "icon must be a string or an object";
   }
 }
 
 export function IsStringOrObject(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({
-      name: 'isStringOrObject',
+      name: "isStringOrObject",
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
@@ -117,7 +117,7 @@ export class ActionDTO {
   @IsString()
   baseModel?: string;
 
-  @IsStringOrObject({ message: 'label must be a string or an object' })
+  @IsStringOrObject({ message: "label must be a string or an object" })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   label?: string | Record<string, any>;
 
@@ -125,11 +125,11 @@ export class ActionDTO {
   @IsString()
   tooltip?: string;
 
-  @IsStringOrObject({ message: 'icon must be a string or an object' })
+  @IsStringOrObject({ message: "icon must be a string or an object" })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon!: string | Record<string, any>;
 
-  @IsStringOrObject({ message: 'icon color must be a string or an object' })
+  @IsStringOrObject({ message: "icon color must be a string or an object" })
   @IsOptional()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   iconColor?: string | Record<string, any>;
@@ -167,6 +167,10 @@ export class ActionDTO {
   @IsObject()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   returnModel: Record<string, any> | boolean = false;
+
+  @IsOptional()
+  @IsString()
+  displayMode!: string;
 }
 
 export type ActionListDTO = Record<string, ActionDTO>;

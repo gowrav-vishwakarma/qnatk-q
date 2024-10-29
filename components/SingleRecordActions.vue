@@ -1,6 +1,6 @@
 <template>
   <q-btn-group :class="buttonGroupClasses">
-    <template v-for="action in singleRecordActions" :key="action.name">
+    <template v-for="action in buttonGroupActions" :key="action.name">
       <q-btn
         v-if="
           actionUnavailableBehavior === 'hide'
@@ -130,13 +130,170 @@
       </q-btn>
     </template>
     <slot />
+
+    <q-btn
+      @click="toggleMenuActions = !toggleMenuActions"
+      dense
+      flat
+      size="sm"
+      icon="more_vert"
+      v-if="menuActions.length"
+    >
+      Actions
+
+      <q-menu offset-y>
+        <q-list dense separator>
+          <q-item
+            v-for="action in menuActions"
+            :key="action.name"
+            @click="() => handleActionClick(action)"
+          >
+            <q-btn
+              v-if="
+                actionUnavailableBehavior === 'hide'
+                  ? checkCondition(action, props.record)
+                  : true
+              "
+              :disabled="
+                actionUnavailableBehavior === 'disable' &&
+                !checkCondition(action, props.record)
+              "
+              dense
+              flat
+              :icon="getIcon(action, props.record)"
+              :color="
+                actionUnavailableBehavior === 'disable' &&
+                !checkCondition(action, props.record)
+                  ? 'grey'
+                  : getIconColor(action, props.record)
+              "
+              size="sm"
+              @click="() => handleActionClick(action)"
+              :label="getLabel(action, props.record)"
+              class="full-width"
+              align="left"
+            >
+              <slot
+                :name="`${action.name}-outer`"
+                :action="action"
+                :record="props.record"
+                :closeDialog="() => toggleDialog(action.name, false)"
+                :confirmAction="() => handleConfirmation(action)"
+              >
+                <q-dialog v-model="dialogStates[action.name]" full-width>
+                  <template v-if="isLoading">
+                    <q-spinner />
+                  </template>
+                  <template v-else>
+                    <slot
+                      :name="action.name"
+                      :action="action"
+                      :record="props.record"
+                      :closeDialog="() => toggleDialog(action.name, false)"
+                      :confirmAction="() => handleConfirmation(action)"
+                    >
+                      <!-- Check if the action UI is of type confirmation -->
+                      <template
+                        v-if="action.ui && action.ui.mode === 'confirmation'"
+                      >
+                        <q-card>
+                          <q-card-section>
+                            <div class="text-h6">{{ action.ui.title }}</div>
+                            <div>{{ action.ui.message }}</div>
+                          </q-card-section>
+                          <q-card-actions align="right">
+                            <q-btn
+                              flat
+                              label="Cancel"
+                              color="primary"
+                              @click="toggleDialog(action.name, false)"
+                            />
+                            <q-btn
+                              flat
+                              label="Confirm"
+                              color="primary"
+                              @click="() => handleConfirmation(action)"
+                            />
+                          </q-card-actions>
+                        </q-card>
+                      </template>
+                      <template v-else>
+                        <q-card>
+                          <q-card-section>
+                            <div class="text-h6">{{ action.ui.title }}</div>
+                            <div>{{ action.ui.message }}</div>
+                          </q-card-section>
+                          <q-card-section>
+                            <q-banner icon="warning" class="bg-red-5" dark>
+                              <div class="text-h6">NOT IMPLEMENTED</div>
+                              <div>
+                                This action is not implemented yet. Please
+                                create a template in parent component with
+                                <b>'#{{ action.name }}'</b>
+                                slot.
+                              </div>
+                            </q-banner>
+                            <code>
+                              &lt;template #{{ action.name }}="{ action,
+                              closeDialog }"&gt; &lt;your-component
+                              :action="action" :record="props.row"
+                              :close-dialog="closeDialog"
+                              @action-completed="fetchData"
+                              &gt;&lt;/your-component> &lt;/template&gt;
+                            </code>
+                          </q-card-section>
+                          <q-card-actions align="right">
+                            <q-btn
+                              flat
+                              label="Cancel"
+                              color="primary"
+                              @click="toggleDialog(action.name, false)"
+                            />
+                            <q-btn
+                              flat
+                              label="NOT IMPLEMENTED"
+                              color="red"
+                              @click="toggleDialog(action.name, false)"
+                            />
+                          </q-card-actions>
+                        </q-card>
+                      </template>
+                    </slot>
+                  </template>
+                  <template v-slot:confirm-action="{ action }">
+                    <!-- Scoped slot for overriding confirm action -->
+                    <slot
+                      :name="'confirm-' + action.name"
+                      :action="action"
+                      :closeDialog="() => toggleDialog(action.name, false)"
+                    />
+                  </template>
+                  <template
+                    v-for="(errorMessages, field) in errors"
+                    :key="field"
+                  >
+                    <div
+                      v-for="message in errorMessages"
+                      :key="message"
+                      class="text-negative"
+                    >
+                      {{ message }}
+                    </div>
+                  </template>
+                </q-dialog>
+              </slot>
+            </q-btn>
+          </q-item>
+        </q-list>
+      </q-menu>
+    </q-btn>
   </q-btn-group>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, toRefs } from 'vue';
-import { useForm } from '../composibles/use-form';
-import { ActionListDTO } from '../ActionDTO';
+import { computed, reactive, toRefs, ref, PropType } from "vue";
+import { useForm } from "../composibles/use-form";
+import { ActionListDTO } from "../ActionDTO";
 
 interface DialogStates {
   [key: string]: boolean;
@@ -152,7 +309,15 @@ const props = defineProps({
     required: true,
   },
   visibleActions: {
-    type: Array as () => string[],
+    type: [Array, Object] as PropType<
+      | string[]
+      | Record<
+          string,
+          {
+            displayMode: "btngroup" | "menu";
+          }
+        >
+    >,
     default: () => [],
   },
   record: {
@@ -165,7 +330,7 @@ const props = defineProps({
   },
   actionUnavailableBehavior: {
     type: String,
-    default: 'disable', // or 'hide'
+    default: "disable", // or 'hide'
   },
   api: {
     type: Function,
@@ -173,17 +338,24 @@ const props = defineProps({
   },
   buttonGroupClasses: {
     type: String,
-    default: '',
+    default: "",
   },
   qnatkUrl: {
     type: String,
-    default: '/qnatk',
+    default: "/qnatk",
   },
 });
 
-const emit = defineEmits(['action-completed']);
+const toggleMenuActions = ref(false);
+
+const emit = defineEmits(["action-completed"]);
 
 const { customActions } = toRefs(props);
+
+const visibleActionsIsArray = Array.isArray(props.visibleActions);
+const visibleActionsArray = visibleActionsIsArray
+  ? props.visibleActions
+  : Object.keys(props.visibleActions);
 
 const checkCondition = (action, record) => {
   const evaluateCondition = (conditionValue, recordValue) => {
@@ -208,14 +380,36 @@ const checkCondition = (action, record) => {
 
 const singleRecordActions = computed(() => {
   const actionKeys = Object.keys(props.actions);
+
   const filteredKeys =
-    props.visibleActions.length > 0
-      ? actionKeys.filter((key) => props.visibleActions.includes(key))
+    visibleActionsArray.length > 0
+      ? actionKeys.filter((key) => visibleActionsArray.includes(key))
       : actionKeys;
 
   return filteredKeys
-    .filter((key) => props.actions[key].mode === 'SingleRecord')
-    .map((key) => props.actions[key]);
+    .filter((key) => props.actions[key].mode === "SingleRecord")
+    .map((key) => {
+      const actionData = props.actions[key];
+      if (visibleActionsIsArray && !actionData["displayMode"])
+        actionData["displayMode"] = "btngroup";
+      else if (!visibleActionsIsArray && props.visibleActions[key]) {
+        actionData["displayMode"] = props.visibleActions[key].displayMode;
+      }
+
+      return actionData;
+    });
+});
+
+const menuActions = computed(() => {
+  return singleRecordActions.value.filter((action) => {
+    return action.displayMode === "menu";
+  });
+});
+
+const buttonGroupActions = computed(() => {
+  return singleRecordActions.value.filter(
+    (action) => action.displayMode !== "menu"
+  );
 });
 
 // State to track dialog open/close for each action
@@ -227,7 +421,7 @@ const dialogStates = reactive(
 );
 
 const handleActionClick = (action) => {
-  console.log('Action clicked:', action.name);
+  console.log("Action clicked:", action.name);
   // Check if there's custom confirmation logic defined for this action
   if (customActions.value[action.name]) {
     // Execute the custom confirmation logic directly
@@ -246,9 +440,9 @@ const toggleDialog = (actionName, open = true) => {
 
 const getIcon = (action, record) => {
   // console.log(action, record);
-  if (typeof action.icon === 'string') {
+  if (typeof action.icon === "string") {
     return action.icon; // Return the string directly if it's a string
-  } else if (typeof action.icon === 'object') {
+  } else if (typeof action.icon === "object") {
     // Iterate through the object keys and check conditions
     for (const [key, condition] of Object.entries(action.icon)) {
       if (checkCondition({ condition }, record)) {
@@ -260,9 +454,9 @@ const getIcon = (action, record) => {
 };
 
 const getIconColor = (action, record) => {
-  if (typeof action.iconColor === 'string') {
+  if (typeof action.iconColor === "string") {
     return action.iconColor; // Return the string directly if it's a string
-  } else if (typeof action.iconColor === 'object') {
+  } else if (typeof action.iconColor === "object") {
     // Iterate through the object keys and check conditions
     for (const [key, condition] of Object.entries(action.iconColor)) {
       if (checkCondition({ condition }, record)) {
@@ -270,13 +464,13 @@ const getIconColor = (action, record) => {
       }
     }
   }
-  return 'primary'; // Default icon or handle this case as needed
+  return "primary"; // Default icon or handle this case as needed
 };
 
 const getLabel = (action, record) => {
-  if (typeof action.label === 'string') {
+  if (typeof action.label === "string") {
     return action.label; // Return the string directly if it's a string
-  } else if (typeof action.label === 'object') {
+  } else if (typeof action.label === "object") {
     // Iterate through the object keys and check conditions
     for (const [key, condition] of Object.entries(action.label)) {
       if (checkCondition({ condition }, record)) {
@@ -311,12 +505,12 @@ const handleConfirmation = async (action) => {
   callbacks.onSuccess = (data) => {
     isLoading.value = false; // Reset loading state
     errors.value = {}; // Reset errors
-    emit('action-completed', { action, modelInstance: data.modelInstance }); // Emitting the event
+    emit("action-completed", { action, modelInstance: data.modelInstance }); // Emitting the event
     // Handle success (e.g., show success message, refresh data)
   };
 
   // Default confirmation logic
-  console.log('Confirmed action:', action.name);
+  console.log("Confirmed action:", action.name);
   await validateAndSubmit(); // Submit the form
   if (Object.keys(errors.value).length === 0 && !isLoading.value) {
     toggleDialog(action.name, false);
